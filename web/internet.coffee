@@ -95,62 +95,18 @@ startCapture = ->
 stopCapture = ->
     $.get "/stop_capture", {uuid: window.uuid}
 
-$ ->
-    window.active_section = $("#main_display")
 
-    $("#display_option").change ->
-        updateStatistics()
-
-    $("table.sortable").each (_, obj) ->
-        $(obj).tablesorter()
-
-    makeTableScroll $("#clients table")[0]
-
-    $("#link_memory").click ->
-        displayMemoryUsage()
-        return false
-
-    $("#link_nat").click ->
-        displayNAT()
-        return false
-
-    $("#link_main").click ->
-        displayMain()
-        return false
-
-    $("#link_tools").click ->
-        displayTools()
-        return false
-
-    $("#start_capture").click ->
-        $("#start_capture")[0].disabled = true
-        $("#stop_capture")[0].disabled = false
-        startCapture()
-
-    $("#stop_capture").click ->
-        $("#start_capture")[0].disabled = false
-        $("#stop_capture")[0].disabled = true
-        stopCapture()
-
-    if location.pathname == "/"
-        updateStatistics()
-
-        jQuery.fx.interval = 50
-        Highcharts.setOptions({
-            global: {
-                useUTC: false
-            }
-        })
-
-        update = true
-        backlog = []
-        chart = new Highcharts.Chart({
+class TrafficGraph
+    update: true
+    backlog: []
+    constructor: (renderTarget) ->
+        @chart = new Highcharts.Chart({
             chart: {
                 animation: {
                     duration: 400,
                     easing: 'linear',
                 },
-                renderTo: 'live_graph',
+                renderTo: renderTarget[0],
                 type: 'areaspline',
                 marginLeft: 80,
                 marginRight: 10,
@@ -230,68 +186,121 @@ $ ->
             ]
         })
 
-        $('#live_graph').hover(
-            -> update = false
-            -> update = true
+        renderTarget.hover(
+            => @update = false
+            => @update = true
         )
-        series1 = chart.series[0]
-        series2 = chart.series[1]
-        if "WebSocket" of window
-            socket = new WebSocket("ws://192.168.1.1:8000/traffic_data/")
-        else
-            socket = new MozWebSocket("ws://192.168.1.1:8000/traffic_data/")
 
-        socket.onmessage = (msg) ->
-            packet = $.parseJSON(msg.data)
-            if packet.Type != "rate"
-                return
+    addPoint: (data) =>
+        if @update == true
+            for index, otherData of @backlog
+                # Using the index here, because series1.data.length
+                # will not update until we call chart.redraw
+                shift = (@chart.series[0].data.length + index) > 60
+                @chart.series[0].addPoint([otherData.Time*1000, otherData.In], false, shift)
+                @chart.series[1].addPoint([otherData.Time*1000, -otherData.Out], false, shift)
+                @backlog = []
+
+            shift = @chart.series[0].data.length > 60
+            @chart.series[0].addPoint([data.Time*1000, data.In], false, shift)
+            @chart.series[1].addPoint([data.Time*1000, -data.Out], false, shift)
+            @chart.redraw()
+        else
+            @backlog.push(data)
+            @backlog.shift() if @backlog.length > 60
+
+    updateDimensions: =>
+        # Use the chart's container's parent to get the new
+        # size.
+        container = $(@chart.container).parent()
+        @chart.setSize(container.width(), container.height(), false)
+
+updateThisMonthsStatistics = (data) ->
+    exp = $("#display_option")[0].value
+    thisMonth = $("#traffic_stats > tbody > tr:first > td")
+    thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
+    thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
+
+updateClients = (data) ->
+    row = $("#clients tr[data-ip='" + data.Host + "']")[0]
+    newRow = false
+    if !row
+        if (data.Out == 0 && data.In == 0) || data.Host == "total"
+            return
+        row = $("<tr data-ip='" + data.Host + "'><td><a href='' title='" + data.Hostname + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Hostname, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
+        row.appendTo("#clients tbody")
+
+        newRow = true
+    up = $(row).find("span.up")[0]
+    down = $(row).find("span.down")[0]
+
+    up.innerHTML = formatByteCount(data.Out, 1000) + "/s"
+    down.innerHTML = formatByteCount(data.In, 1000) + "/s"
+
+    $(up).css("color", byteColor(data.Out, "up"))
+    $(down).css("color", byteColor(data.In, "down"))
+
+    return newRow
+
+$ ->
+    window.active_section = $("#main_display")
+
+    $("#display_option").change ->
+        updateStatistics()
+
+    $("table.sortable").each (_, obj) ->
+        $(obj).tablesorter()
+
+    makeTableScroll $("#clients table")[0]
+
+    $("#link_memory").click ->
+        displayMemoryUsage()
+        return false
+
+    $("#link_nat").click ->
+        displayNAT()
+        return false
+
+    $("#link_main").click ->
+        displayMain()
+        return false
+
+    $("#link_tools").click ->
+        displayTools()
+        return false
+
+    $("#start_capture").click ->
+        $("#start_capture")[0].disabled = true
+        $("#stop_capture")[0].disabled = false
+        startCapture()
+
+    $("#stop_capture").click ->
+        $("#start_capture")[0].disabled = false
+        $("#stop_capture")[0].disabled = true
+        stopCapture()
+
+    updateStatistics()
+
+    graph = new TrafficGraph($("#live_graph"))
+
+    if "WebSocket" of window
+        socket = new WebSocket("ws://192.168.1.1:8000/traffic_data/")
+    else
+        socket = new MozWebSocket("ws://192.168.1.1:8000/traffic_data/")
+
+    socket.onmessage = (msg) ->
+        packet = $.parseJSON(msg.data)
+        if packet.Type == "rate"
             data = packet.Data
             if data.Host == "total"
-                console.log(data)
-                if update == true
-                    for index, otherData of backlog
-                        # Using the index here, because series1.data.length
-                        # will not update until we call chart.redraw
-                        shift = (series1.data.length + index) > 60
-                        series1.addPoint([otherData.Time*1000, otherData.In], false, shift)
-                        series2.addPoint([otherData.Time*1000, -otherData.Out], false, shift)
-                    backlog = []
+                graph.addPoint(data)
+                updateThisMonthsStatistics(data)
 
-                    shift = series1.data.length > 60
-                    series1.addPoint([data.Time*1000, data.In], false, shift)
-                    series2.addPoint([data.Time*1000, -data.Out], false, shift)
-                    chart.redraw()
-                else
-                    backlog.push(data)
-                    backlog.shift() if backlog.length > 60
-                exp = $("#display_option")[0].value
-                thisMonth = $("#traffic_stats > tbody > tr:first > td")
-                thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
-                thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
-
-            row = $("#clients tr[data-ip='" + data.Host + "']")[0]
-            if !row
-                if (data.Out == 0 && data.In == 0) || data.Host == "total"
-                    return
-                row = $("<tr data-ip='" + data.Host + "'><td><a href='' title='" + data.Hostname + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Hostname, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
-                row.appendTo("#clients tbody")
-
-                # Adding a new row might change the graph's available
-                # width, so resize the graph.
-                #
-                # Use the chart's container's parent to get the new
-                # size.
-                container = $(chart.container).parent()
-                console.log(container.width(), container.height())
-                chart.setSize(container.width(), container.height(), false)
-            up = $(row).find("span.up")[0]
-            down = $(row).find("span.down")[0]
-
-            up.innerHTML = formatByteCount(data.Out, 1000) + "/s"
-            down.innerHTML = formatByteCount(data.In, 1000) + "/s"
-
-            $(up).css("color", byteColor(data.Out, "up"))
-            $(down).css("color", byteColor(data.In, "down"))
+            # Adding a new row might change the graph's available
+            # width, so resize the graph.
+            newRow = updateClients(data)
+            if newRow
+                graph.updateDimensions()
 
 
 Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
@@ -305,3 +314,10 @@ Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
         formatByteCount(Math.abs(point.y), 1000) + "/s",
         '</b><br />'
     ].join('')
+
+jQuery.fx.interval = 50
+Highcharts.setOptions({
+    global: {
+        useUTC: false
+    }
+})
