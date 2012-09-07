@@ -1,0 +1,35 @@
+# /etc/sudoers
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# See the man page for details on how to write a sudoers file.
+#
+
+Defaults	env_reset
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+
+%sudo ALL=(ALL) ALL
+
+# User privilege specification
+root	ALL=(ALL) ALL
+admin ALL=(ALL) NOPASSWD:/sbin/iptables
+admin ALL=(ALL) NOPASSWD:/sbin/iptables-save
+admin ALL=(ALL) NOPASSWD:/sbin/iptables-restore
+admin ALL=(ALL) NOPASSWD:/sbin/reboot
+admin ALL=(ALL) NOPASSWD:/usr/sbin/tcpdump
+admin ALL=(ALL) NOPASSWD:/usr/bin/netstat-nat
+admin ALL=(ALL) NOPASSWD:/bin/netstat
+admin ALL=(ALL) NOPASSWD:/sbin/ifconfig
+admin ALL=(ALL) NOPASSWD:/usr/sbin/arp
+
+# Allow members of group sudo to execute any command
+# (Note that later entries override this, so you might need to move
+# it further down)
+#
+#includedir /etc/sudoers.d

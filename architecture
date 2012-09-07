@@ -1,0 +1,26 @@
+# -*- mode: org -*-
+* PXE
+  1) DHCPD hands out an IP, DNS the TFTP server and the boot loader
+  2) PXE loads the loader, which in turn loads the menu via TFTP
+  3) Depending on the menu choice, the loader will load an image via TFTP or HTTP
+** Used software
+*** DHCPD: ISC DHCP Server
+    filename "gpxelinux.0";
+    next-server 192.168.1.1;
+*** TFTP: tftpd-hpa
+    - Files stored at /srv/tftp
+*** HTTP: nginx
+    - Files stored at /var/www/pxe
+    - Available via the host pxe.router
+** Images
+*** System Rescue CD
+    - Loaded entirely via HTTP
+    - keep-alive needs to be disabled for that host or the downloader in sysrcd will hang
+*** PXE Knife
+    - A number of nested menus and tools, all available over TFTP
+*** Hardware Detection Tool
+    - Completely available over TFTP
+    - COM32 module (hdt.c32)
+    - pci.ids for the hardware names
+*** memtest86+
+    - Memtest, single image file, available over TFTP

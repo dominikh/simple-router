@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+  {{$pUsed := .Memory.UsedPercentage | printf "%.2f"}}
+  {{$pBuffers := .Memory.BuffersPercentage | printf "%.2f"}}
+  {{$pCache := .Memory.CachePercentage | printf "%.2f"}}
+  <head>
+    <meta charset="utf-8" />
+    <title>Router</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/screen.css" />
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/highcharts.js"></script>
+    <script type="text/javascript" src="/js/jquery.xcolor.min.js"></script>
+    <script type="text/javascript" src="/js/internet.js"></script>
+    <script type="text/javascript" src="/js/jquery.tablesorter.min.js"></script>
+  </head>
+
+  <body>
+    <div id="container">
+      <article class="group" id="system">
+        <h1>System information</h1>
+        <table class="system_information vertical">
+          <tr>
+            <th><a id="link_memory" href="">Memory</a></th>
+            <td>
+              <div class="progressbar">
+                <span class="used" title="{{.Memory.UsedText}} used ({{$pUsed}}%)" style="width: {{$pUsed}}%"></span>
+                <span class="buffers" title="{{.Memory.BuffersText}} buffers ({{$pBuffers}}%)" style="width: {{$pBuffers}}%"></span>
+                <span class="cache" title="{{.Memory.CacheText}} cache ({{$pCache}}%)" style="width: {{$pCache}}%"></span>
+              </div>
+              <table class="memory_usage">
+                <tr>
+                  <th>Used</th>
+                  <td>{{.Memory.UsedText}} ({{$pUsed}}%)</td>
+                </tr>
+                <tr>
+                  <th>Buffers</th>
+                  <td>{{.Memory.BuffersText}} ({{$pBuffers}}%)</td>
+                </tr>
+                <tr>
+                  <th>Cache</th>
+                  <td>{{.Memory.CacheText}} ({{$pCache}}%)</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>CPU</th>
+            <td>
+              <div class="progressbar">
+                <span class="usage" title="32%" style="width: 32%"></span>
+              </div>
+              <div class="progressbar">
+                <span class="usage" title="19%" style="width: 19%"></span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Temperatures</th>
+            <td>
+              {{ temperatures .Temperatures }}
+            </td>
+          </tr>
+          <tr>
+            <th>LAN IP</th>
+            <td class="ip">{{firstAddr .Interfaces.LAN.Addrs }}</td>
+          </tr>
+          <tr>
+            <th>LAN MAC</th>
+            <td class="mac">{{ .Interfaces.LAN.HardwareAddr }}</td>
+          </tr>
+          <tr>
+            <th>WAN IP</th>
+            <td class="ip">{{firstAddr .Interfaces.WAN.Addrs }}</td>
+          </tr>
+          <tr>
+            <th>WAN MAC</th>
+            <td class="mac">{{ .Interfaces.WAN.HardwareAddr }}</td>
+          </tr>
+        </table>
+      </article>
+
+      <div id="main">
+        <nav class="group" id="navigation">
+          <ul>
+            <li><a href="/" id="link_main">Main</a></li><li><a href="">DHCP</a></li><li><a href="" id="link_nat">NAT</a></li><li><a href="" id="link_tools">Tools</a></li>
+          </ul>
+        </nav>
+
+        <div class="group" id="display">
+          <article id="main_display">
+            <h1>Live Graph</h1>
+            <div id="live_graph"></div>
+            <h1>Monthly statistics</h1>
+            <table id="traffic_stats">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Downstream</th>
+                  <th>Upstream</th>
+                </tr>
+              </thead>
+              <tr>
+                <td>08/2012</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>07/2012</td>
+                <td data-bytes="0">100 GiB</td>
+                <td data-bytes="0">20 GiB</td>
+              </tr>
+              <tr>
+                <td>06/2012</td>
+                <td data-bytes="0">0</td>
+                <td data-bytes="0">0</td>
+              </tr>
+              <tr>
+                <td>05/2012</td>
+                <td data-bytes="0">0</td>
+                <td data-bytes="0">0</td>
+              </tr>
+              <tr>
+                <td>04/2012</td>
+                <td data-bytes="0">0</td>
+                <td data-bytes="0">0</td>
+              </tr>
+            </table>
+            Display in:
+            <select id="display_option">
+              <option value="-1">Best fit</option>
+              <option value="4">TB/s</option>
+              <option value="3">GB/s</option>
+              <option value="2">MB/s</option>
+              <option value="1">KB/s</option>
+              <option value="0">B/s</option>
+            </select>
+          </article>
+
+          <article id="nat">
+            <h1>Port forwards</h1>
+            <table class="nat sortable" id="port_forwards">
+              <thead>
+                <tr>
+                  <th>Port from</th>
+                  <th>Address from</th>
+                  <th>Port to</th>
+                  <th>Address to</th>
+                  <th>Protocol</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tr>
+                <td>80</td>
+                <td>any</td>
+                <td>80</td>
+                <td class="ip">192.168.1.4</td>
+                <td>tcp</td>
+                <td><a href="">Edit</a> | <a href="">Delete</a></td>
+              </tr>
+              <tr>
+                <td>5000-6000</td>
+                <td>any</td>
+                <td>5000-6000</td>
+                <td class="ip">192.168.1.5</td>
+                <td>tcp</td>
+                <td><a href="">Edit</a> | <a href="">Delete</a></td>
+              </tr>
+              <tr>
+                <td>5000-6000</td>
+                <td>any</td>
+                <td>5000-6000</td>
+                <td class="ip">192.168.1.5</td>
+                <td>udp</td>
+                <td><a href="">Edit</a> | <a href="">Delete</a></td>
+              </tr>
+            </table>
+
+            <h1>Active connections</h1>
+            <table id="active_connections" class="sortable">
+              <thead>
+                <tr>
+                  <th>Protocol</th>
+                  <th>Source Address</th>
+                  <th>Destination Address</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </article>
+
+
+          <section class="group" id="tools">
+            <h1>Traffic capture</h1>
+            <div id="traffic_capture">
+              <form>
+                <select id="capture_interface">
+                  <option value="eth0">WAN interface</option>
+                  <option value="eth1">LAN interface/s</option>
+                </select>
+                <input type="button" id="start_capture" value="Start capture" />
+                <input type="button" id="stop_capture" value="End capture" disabled="disabled" />
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section class="group" id="clients">
+        <h1>Clients</h1>
+        <div class="scrollable_table">
+          <table data-max-rows="15">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Up</th>
+                <th>Down</th>
+                <th>#Conn</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Clients }}
+              <tr data-ip="{{ .IP }}">
+                <td><a href="" title="{{ .Hostname }} &lt;{{ .IP }}&gt;">{{ .Hostname }}</a></td>
+                <td class="up">↗<span class="up">0 B/s</span></td>
+                <td class="down">↙<span class="down">0 B/s</span></td>
+                <td>{{ .Connections }}</td>
+              </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        </div>
+
+        <h1>Network shares</h1>
+        </section>>
+      </div>
+    </body>
+  </html>
