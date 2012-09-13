@@ -72,7 +72,7 @@ func (tm *Monitor) sendStat(stat *Stat) {
 	for e := tm.Channels.Front(); e != nil; e = e.Next() {
 		select {
 		case e.Value.(chan Stat) <- *stat:
-		case <- time.After(1 * time.Second):
+		case <-time.After(1 * time.Second):
 			log.Println("Monitor.sendStat: Channel send timed out, unregistered channel.")
 			channel := e.Value.(chan Stat)
 			tm.RUnlock()
