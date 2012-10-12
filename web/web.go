@@ -74,7 +74,7 @@ type Rate struct {
 var tm = traffic.NewMonitor(500 * time.Millisecond)
 
 func trafficServer(ws *websocket.Conn) {
-	ch := make(chan traffic.Stat, 1)
+	ch := make(chan traffic.ProgressiveStat, 1)
 	tm.RegisterChannel(ch)
 
 	for {
@@ -86,7 +86,7 @@ func trafficServer(ws *websocket.Conn) {
 		} else {
 			hostname, _ = lookup.IPToHostname(ip)
 		}
-		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), hostname, stat.Host, stat.BPSIn, stat.BPSOut, stat.TotalIn, stat.TotalOut}}
+		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), hostname, stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
 		err := websocket.JSON.Send(ws, msg)
 		if err != nil {
 			fmt.Println(err)
