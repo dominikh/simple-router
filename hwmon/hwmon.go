@@ -29,7 +29,7 @@ func (mon HWMon) Temperatures() (map[string]float64, error) {
 		if err != nil {
 			return nil, err
 		}
-		temps[string(name)] = float / 1000
+		temps[strings.TrimSpace(string(name))] = float / 1000
 
 	}
 

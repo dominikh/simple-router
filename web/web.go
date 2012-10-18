@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dominikh/simple-router/client"
 	"github.com/dominikh/simple-router/hwmon"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/memory"
@@ -24,27 +23,15 @@ import (
 	"time"
 )
 
-type MemoryData struct {
-	UsedText       string
-	UsedPercentage float64
-
-	BuffersText       string
-	BuffersPercentage float64
-
-	CacheText       string
-	CachePercentage float64
-}
-
 type InterfaceData struct {
 	LAN *net.Interface
 	WAN *net.Interface
 }
 
-type IndexData struct {
-	Memory       MemoryData
+type SystemData struct {
+	Memory       memory.Stats
 	Interfaces   InterfaceData
 	Temperatures map[string]float64
-	Clients      []client.Client
 }
 
 type InternetData struct {
@@ -60,7 +47,6 @@ type Packet struct {
 	Data interface{}
 }
 
-
 type Rate struct {
 	Time     string
 	Hostname string
@@ -72,6 +58,7 @@ type Rate struct {
 }
 
 var tm = traffic.NewMonitor(500 * time.Millisecond)
+var captures = NewCaptureManager()
 
 func trafficServer(ws *websocket.Conn) {
 	ch := make(chan traffic.ProgressiveStat, 1)
@@ -155,50 +142,7 @@ var funcMap = template.FuncMap{
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	IndexTemplate, _ := template.New("index.html").Funcs(funcMap).ParseFiles("index.html", "header.html", "footer.html")
 
-	memory := memory.GetStats()
-	usedPercentage := (float64(memory.Active) / float64(memory.Total)) * 100
-	buffersPercentage := (float64(memory.Buffers) / float64(memory.Total)) * 100
-	cachePercentage := (float64(memory.Cached) / float64(memory.Total)) * 100
-
-	usedText := formatByteCount(memory.Active*1000, 1024, -1)
-	buffersText := formatByteCount(memory.Buffers*1000, 1024, -1)
-	cacheText := formatByteCount(memory.Cached*1000, 1024, -1)
-
-	mData := MemoryData{usedText, usedPercentage, buffersText, buffersPercentage, cacheText, cachePercentage}
-
-	lanEth, _ := net.InterfaceByName("eth1")
-	wanEth, _ := net.InterfaceByName("eth0")
-
-	iData := InterfaceData{lanEth, wanEth}
-
-	mon1 := hwmon.HWMon{"hwmon0", []string{"2", "3"}}
-	mon2 := hwmon.HWMon{"hwmon1", []string{"1"}}
-
-	temps1, err := mon1.Temperatures()
-	if err != nil {
-		panic(err)
-	}
-	temps2, err := mon2.Temperatures()
-	if err != nil {
-		panic(err)
-	}
-
-	allTemps := make(map[string]float64)
-	for key, value := range temps1 {
-		allTemps[key] = value
-	}
-
-	for key, value := range temps2 {
-		allTemps[key] = value
-	}
-
-	clients, err := client.Clients()
-	if err != nil {
-		fmt.Println(err)
-	}
-	data := IndexData{mData, iData, allTemps, clients}
-
-	IndexTemplate.Execute(w, data)
+	IndexTemplate.Execute(w, nil)
 }
 
 func internetHandler(w http.ResponseWriter, r *http.Request) {
@@ -274,13 +218,11 @@ func NewCaptureManager() *CaptureManager {
 	return &CaptureManager{sync.RWMutex{}, make(map[string]*exec.Cmd)}
 }
 
-var captures = NewCaptureManager()
-
 func trafficCaptureHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := r.FormValue("uuid")
 	iface := r.FormValue("interface")
 
-	w.Header().Add("Content-disposition", "attachment; filename=capture_" + iface + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".cap")
+	w.Header().Add("Content-disposition", "attachment; filename=capture_"+iface+"_"+strconv.FormatInt(time.Now().Unix(), 10)+".cap")
 
 	fmt.Println(uuid)
 	tcpdump := exec.Command("sudo", "tcpdump", "-Z", "admin", "-i", iface, "-w", "-")
@@ -328,6 +270,57 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 	cmd.Wait()
 }
 
+func systemDataServer(ws *websocket.Conn) {
+	for {
+		memory := memory.GetStats()
+		// usedPercentage := (float64(memory.Active) / float64(memory.Total)) * 100
+		// buffersPercentage := (float64(memory.Buffers) / float64(memory.Total)) * 100
+		// cachePercentage := (float64(memory.Cached) / float64(memory.Total)) * 100
+
+		// usedText := formatByteCount(memory.Active*1000, 1024, -1)
+		// buffersText := formatByteCount(memory.Buffers*1000, 1024, -1)
+		// cacheText := formatByteCount(memory.Cached*1000, 1024, -1)
+
+		// mData := MemoryData{usedText, usedPercentage, buffersText, buffersPercentage, cacheText, cachePercentage}
+
+		lanEth, _ := net.InterfaceByName("eth1")
+		wanEth, _ := net.InterfaceByName("eth0")
+
+		iData := InterfaceData{lanEth, wanEth}
+
+		mon1 := hwmon.HWMon{"hwmon0", []string{"2", "3"}}
+		mon2 := hwmon.HWMon{"hwmon1", []string{"1"}}
+
+		temps1, err := mon1.Temperatures()
+		if err != nil {
+			panic(err)
+		}
+		temps2, err := mon2.Temperatures()
+		if err != nil {
+			panic(err)
+		}
+
+		allTemps := make(map[string]float64)
+		for key, value := range temps1 {
+			allTemps[key] = value
+		}
+
+		for key, value := range temps2 {
+			allTemps[key] = value
+		}
+
+		data := SystemData{memory, iData, allTemps}
+
+		err = websocket.JSON.Send(ws, data)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
 func main() {
 	go tm.Start()
 
@@ -344,7 +337,9 @@ func main() {
 	http.HandleFunc("/uuid", uuidHandler)
 	http.HandleFunc("/traffic_capture", trafficCaptureHandler)
 	http.HandleFunc("/stop_capture", trafficCaptureStopHandler)
-	http.Handle("/traffic_data/", websocket.Handler(trafficServer))
+
+	http.Handle("/websocket/traffic_data/", websocket.Handler(trafficServer))
+	http.Handle("/websocket/system_data/", websocket.Handler(systemDataServer))
 
 	err := srv.ListenAndServe()
 	if err != nil {

@@ -30,15 +30,15 @@
               <table class="memory_usage">
                 <tr>
                   <th>Used</th>
-                  <td>{{.Memory.UsedText}} ({{$pUsed}}%)</td>
+                  <td class="used"></td>
                 </tr>
                 <tr>
                   <th>Buffers</th>
-                  <td>{{.Memory.BuffersText}} ({{$pBuffers}}%)</td>
+                  <td class="buffers"></td>
                 </tr>
                 <tr>
                   <th>Cache</th>
-                  <td>{{.Memory.CacheText}} ({{$pCache}}%)</td>
+                  <td class="cache"></td>
                 </tr>
               </table>
             </td>
@@ -57,24 +57,23 @@
           <tr>
             <th>Temperatures</th>
             <td>
-              {{ temperatures .Temperatures }}
             </td>
           </tr>
           <tr>
             <th>LAN IP</th>
-            <td class="ip">{{firstAddr .Interfaces.LAN.Addrs }}</td>
+            <td class="ip"></td>
           </tr>
           <tr>
             <th>LAN MAC</th>
-            <td class="mac">{{ .Interfaces.LAN.HardwareAddr }}</td>
+            <td class="mac"></td>
           </tr>
           <tr>
             <th>WAN IP</th>
-            <td class="ip">{{firstAddr .Interfaces.WAN.Addrs }}</td>
+            <td class="ip"></td>
           </tr>
           <tr>
             <th>WAN MAC</th>
-            <td class="mac">{{ .Interfaces.WAN.HardwareAddr }}</td>
+            <td class="mac"></td>
           </tr>
         </table>
       </article>

@@ -11,7 +11,7 @@ type Stats struct {
 	Free    uint64
 	Buffers uint64
 	Cached  uint64
-	Active  uint64
+	Used  uint64
 }
 
 func GetStats() Stats {
@@ -28,7 +28,7 @@ func GetStats() Stats {
 		}
 		key := fields[0][0 : len(fields[0])-1]
 		value, _ := strconv.ParseUint(fields[1], 10, 64)
-		values[key] = value
+		values[key] = value * 1000
 	}
 
 	return Stats{

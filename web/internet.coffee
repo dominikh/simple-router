@@ -281,12 +281,16 @@ $ ->
 
     updateStatistics()
 
+    displayTrafficGraph()
+    displaySystemData()
+
+displayTrafficGraph = ->
     graph = new TrafficGraph($("#live_graph"))
 
     if "WebSocket" of window
-        socket = new WebSocket("ws://192.168.1.1:8000/traffic_data/")
+        socket = new WebSocket("ws://192.168.1.1:8000/websocket/traffic_data/")
     else
-        socket = new MozWebSocket("ws://192.168.1.1:8000/traffic_data/")
+        socket = new MozWebSocket("ws://192.168.1.1:8000/websocket/traffic_data/")
 
     socket.onmessage = (msg) ->
         packet = $.parseJSON(msg.data)
@@ -301,6 +305,35 @@ $ ->
             newRow = updateClients(data)
             if newRow
                 graph.updateDimensions()
+
+
+displaySystemData = ->
+    if "WebSocket" of window
+        socket = new WebSocket("ws://192.168.1.1:8000/websocket/system_data/")
+    else
+        socket = new MozWebSocket("ws://192.168.1.1:8000/websocket/system_data/")
+
+    socket.onmessage = (msg) ->
+        data = $.parseJSON(msg.data)
+
+        usedPercentage = (data["Memory"]["Used"] / data["Memory"]["Total"]) * 100
+        usedText = formatByteCount(data["Memory"]["Used"], 1024, -1)
+        $(".system_information .progressbar .used").css("width", usedPercentage + "%")
+        $(".system_information .progressbar .used").attr("title", usedText + " used (" + usedPercentage.toFixed(2) + "%)")
+        $(".system_information .memory_usage .used")[0].innerHTML = usedText + " (" + usedPercentage.toFixed(2) + "%)"
+
+
+        buffersPercentage = (data["Memory"]["Buffers"] / data["Memory"]["Total"]) * 100
+        buffersText = formatByteCount(data["Memory"]["Buffers"], 1024, -1)
+        $(".system_information .progressbar .buffers").css("width", buffersPercentage + "%")
+        $(".system_information .progressbar .buffers").attr("title", buffersText + " used (" + buffersPercentage.toFixed(2) + "%)")
+        $(".system_information .memory_usage .buffers")[0].innerHTML = buffersText + " (" + buffersPercentage.toFixed(2) + "%)"
+
+        cachePercentage = (data["Memory"]["Cached"] / data["Memory"]["Total"]) * 100
+        cacheText = formatByteCount(data["Memory"]["Cached"], 1024, -1)
+        $(".system_information .progressbar .cache").css("width", cachePercentage + "%")
+        $(".system_information .progressbar .cache").attr("title", cacheText + " used (" + cachePercentage.toFixed(2) + "%)")
+        $(".system_information .memory_usage .cache")[0].innerHTML = cacheText + " (" + cachePercentage.toFixed(2) + "%)"
 
 
 Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
