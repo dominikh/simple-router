@@ -49,7 +49,6 @@ type Packet struct {
 
 type Rate struct {
 	Time     string
-	Hostname string
 	Host     string
 	In       uint64
 	Out      uint64
@@ -66,14 +65,7 @@ func trafficServer(ws *websocket.Conn) {
 
 	for {
 		stat := <-ch
-		var hostname string
-		ip := net.ParseIP(stat.Host)
-		if ip == nil {
-			hostname = stat.Host
-		} else {
-			hostname, _ = lookup.IPToHostname(ip)
-		}
-		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), hostname, stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
+		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
 		err := websocket.JSON.Send(ws, msg)
 		if err != nil {
 			fmt.Println(err)
@@ -242,9 +234,17 @@ func trafficCaptureHandler(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, pipe)
 }
 
+func resolveIPHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	splits := strings.Split(path, "/")
+	ip := net.ParseIP(splits[len(splits)-1])
+	// FIXME check error
+	hostname, _ := lookup.IPToHostname(ip)
+	io.WriteString(w, hostname)
+}
+
 func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := r.FormValue("uuid")
-	fmt.Println(uuid)
 	cmd, ok := captures.GetCapture(uuid)
 	if !ok {
 		// Invalid uuid
@@ -273,15 +273,6 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 func systemDataServer(ws *websocket.Conn) {
 	for {
 		memory := memory.GetStats()
-		// usedPercentage := (float64(memory.Active) / float64(memory.Total)) * 100
-		// buffersPercentage := (float64(memory.Buffers) / float64(memory.Total)) * 100
-		// cachePercentage := (float64(memory.Cached) / float64(memory.Total)) * 100
-
-		// usedText := formatByteCount(memory.Active*1000, 1024, -1)
-		// buffersText := formatByteCount(memory.Buffers*1000, 1024, -1)
-		// cacheText := formatByteCount(memory.Cached*1000, 1024, -1)
-
-		// mData := MemoryData{usedText, usedPercentage, buffersText, buffersPercentage, cacheText, cachePercentage}
 
 		lanEth, _ := net.InterfaceByName("eth1")
 		wanEth, _ := net.InterfaceByName("eth0")
@@ -340,6 +331,8 @@ func main() {
 
 	http.Handle("/websocket/traffic_data/", websocket.Handler(trafficServer))
 	http.Handle("/websocket/system_data/", websocket.Handler(systemDataServer))
+
+	http.HandleFunc("/resolve_ip/", resolveIPHandler)
 
 	err := srv.ListenAndServe()
 	if err != nil {

@@ -10,7 +10,7 @@ type Stats struct {
 	Total   uint64
 	Free    uint64
 	Buffers uint64
-	Cached  uint64
+	Cache  uint64
 	Used  uint64
 }
 

@@ -32,6 +32,9 @@ byteColor = (bytes, direction) ->
 
     return $.xcolor.darken([Math.floor(255 * r), Math.floor(255 * (1 - r)), 0], 2).toString()
 
+capitalize = (s) ->
+    return s.charAt(0).toUpperCase() + s[1..-1]
+
 
 updateStatistics = ->
     exp = $("#display_option")[0].value
@@ -221,16 +224,32 @@ updateThisMonthsStatistics = (data) ->
     thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
     thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
 
+ResolvedIPs = {}
+
+resolveIP = (ip) ->
+    return if ResolvedIPs[ip]
+    $.ajax "/resolve_ip/" + ip, success: (data) ->
+        ResolvedIPs[ip] = data
+
+
 updateClients = (data) ->
     row = $("#clients tr[data-ip='" + data.Host + "']")[0]
-    newRow = false
+    resizeGraph = false
     if !row
         if (data.Out == 0 && data.In == 0) || data.Host == "total"
             return
-        row = $("<tr data-ip='" + data.Host + "'><td><a href='' title='" + data.Hostname + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Hostname, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
+        resolveIP(data.Host)
+
+        row = $("<tr data-hostname='" + data.Host + "' data-ip='" + data.Host + "'><td><a href='' title='" + data.Host + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Host, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
         row.appendTo("#clients tbody")
 
-        newRow = true
+        resizeGraph = true
+    else
+        if (hostname = ResolvedIPs[data.Host]) && ($(row).attr("data-hostname") != hostname)
+            $(row).attr("data-hostname", hostname)
+            $(row).find("td a").attr("title", hostname + " &lt;" + data.Host + "&gt;")
+            $(row).find("td a")[0].innerHTML = ellipsize(hostname, 25)
+            resizeGraph = true
     up = $(row).find("span.up")[0]
     down = $(row).find("span.down")[0]
 
@@ -240,7 +259,7 @@ updateClients = (data) ->
     $(up).css("color", byteColor(data.Out, "up"))
     $(down).css("color", byteColor(data.In, "down"))
 
-    return newRow
+    return resizeGraph
 
 $ ->
     window.active_section = $("#main_display")
@@ -316,25 +335,19 @@ displaySystemData = ->
     socket.onmessage = (msg) ->
         data = $.parseJSON(msg.data)
 
-        usedPercentage = (data["Memory"]["Used"] / data["Memory"]["Total"]) * 100
-        usedText = formatByteCount(data["Memory"]["Used"], 1024, -1)
-        $(".system_information .progressbar .used").css("width", usedPercentage + "%")
-        $(".system_information .progressbar .used").attr("title", usedText + " used (" + usedPercentage.toFixed(2) + "%)")
-        $(".system_information .memory_usage .used")[0].innerHTML = usedText + " (" + usedPercentage.toFixed(2) + "%)"
+        updateMemoryStat(data["Memory"], "used")
+        updateMemoryStat(data["Memory"], "buffers")
+        updateMemoryStat(data["Memory"], "cache")
 
+updateMemoryStat = (memory, stat) ->
+    el = $(".system_information .progressbar ." + stat.toLowerCase())
+    stat = capitalize(stat)
+    percentage = (memory[stat] / memory["Total"]) * 100
+    text = formatByteCount(memory[stat], 1024, -1)
 
-        buffersPercentage = (data["Memory"]["Buffers"] / data["Memory"]["Total"]) * 100
-        buffersText = formatByteCount(data["Memory"]["Buffers"], 1024, -1)
-        $(".system_information .progressbar .buffers").css("width", buffersPercentage + "%")
-        $(".system_information .progressbar .buffers").attr("title", buffersText + " used (" + buffersPercentage.toFixed(2) + "%)")
-        $(".system_information .memory_usage .buffers")[0].innerHTML = buffersText + " (" + buffersPercentage.toFixed(2) + "%)"
-
-        cachePercentage = (data["Memory"]["Cached"] / data["Memory"]["Total"]) * 100
-        cacheText = formatByteCount(data["Memory"]["Cached"], 1024, -1)
-        $(".system_information .progressbar .cache").css("width", cachePercentage + "%")
-        $(".system_information .progressbar .cache").attr("title", cacheText + " used (" + cachePercentage.toFixed(2) + "%)")
-        $(".system_information .memory_usage .cache")[0].innerHTML = cacheText + " (" + cachePercentage.toFixed(2) + "%)"
-
+    el.css("width", percentage + "%")
+    el.attr("title", text + " used (" + percentage.toFixed(2) + "%)")
+    $(".system_information .memory_usage ." + stat.toLowerCase())[0].innerHTML = text + " (" + percentage.toFixed(2) + "%)"
 
 Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
     point = this
