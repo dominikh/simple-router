@@ -60,11 +60,11 @@ var tm = traffic.NewMonitor(500 * time.Millisecond)
 var captures = NewCaptureManager()
 
 func trafficServer(ws *websocket.Conn) {
-	ch := make(chan traffic.ProgressiveStat, 1)
+	ch := make(chan interface{}, 1)
 	tm.RegisterChannel(ch)
 
 	for {
-		stat := <-ch
+		stat := (<-ch).(*traffic.ProgressiveStat)
 		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
 		err := websocket.JSON.Send(ws, msg)
 		if err != nil {
