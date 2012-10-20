@@ -263,7 +263,7 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 func systemDataServer(ws *websocket.Conn) {
 	ch := make(chan interface{}, 1)
 	sm.RegisterChannel(ch)
-
+	sm.Force()
 	for {
 		data := (<-ch).(*system.Data)
 

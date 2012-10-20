@@ -54,7 +54,7 @@ func NewMonitor(delay time.Duration) *monitor.Monitor {
 
 			m.SendData(&data)
 
-			time.Sleep(m.Delay)
+			m.Wait()
 		}
 	})
 }

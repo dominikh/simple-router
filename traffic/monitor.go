@@ -67,7 +67,7 @@ func NewMonitor(delay time.Duration) *monitor.Monitor {
 			first = false
 			last_time = this_time
 			last_statistics = statistics
-			time.Sleep(m.Delay)
+			m.Wait()
 		}
 	})
 }
