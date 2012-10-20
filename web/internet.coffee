@@ -1,3 +1,6 @@
+uuid = null
+ResolvedIPs = {}
+
 formatByteCount = (bytes, unit = 1000, force = -1) ->
     if bytes < unit
         return bytes + " B"
@@ -35,6 +38,21 @@ byteColor = (bytes, direction) ->
 capitalize = (s) ->
     return s.charAt(0).toUpperCase() + s[1..-1]
 
+ellipsize = (s, length) ->
+    if s.length > length
+        s[0...length] + "…"
+    else
+        s
+
+makeTableScroll = (el) ->
+    maxRows = el.getAttribute("data-max-rows")
+    wrapper = el.parentNode
+    rowsInTable = el.rows.length
+    height = 0
+    if rowsInTable > maxRows
+        for row in $(el.rows)[0...maxRows]
+            height += row.clientHeight
+        wrapper.style.height = height + "px"
 
 updateStatistics = ->
     exp = $("#display_option")[0].value
@@ -72,31 +90,13 @@ displayNAT = ->
             row.appendTo(table.find("tbody"))
         table.trigger("update")
 
-ellipsize = (s, length) ->
-    if s.length > length
-        s[0...length] + "…"
-    else
-        s
-
-makeTableScroll = (el) ->
-    maxRows = el.getAttribute("data-max-rows")
-    wrapper = el.parentNode
-    rowsInTable = el.rows.length
-    height = 0
-    if rowsInTable > maxRows
-        for row in $(el.rows)[0...maxRows]
-            height += row.clientHeight
-        wrapper.style.height = height + "px"
-
-window.uuid = null
-
 startCapture = ->
     $.get "/uuid", "", (data) ->
-        window.uuid = data
+        uuid = data
         window.location = "/traffic_capture?uuid=" + data + "&interface=" + $("#capture_interface")[0].value
 
 stopCapture = ->
-    $.get "/stop_capture", {uuid: window.uuid}
+    $.get "/stop_capture", {uuid: uuid}
 
 
 class TrafficGraph
@@ -223,8 +223,6 @@ updateThisMonthsStatistics = (data) ->
     thisMonth = $("#traffic_stats > tbody > tr:first > td")
     thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
     thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
-
-ResolvedIPs = {}
 
 resolveIP = (ip) ->
     return if ResolvedIPs[ip]
