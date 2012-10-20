@@ -1,3 +1,4 @@
+active_section = null
 uuid = null
 ResolvedIPs = {}
 
@@ -66,21 +67,21 @@ displayMemoryUsage = ->
     $(".system_information table.memory_usage").fadeToggle(250)
 
 displayMain = ->
-    window.active_section.fadeOut 250, ->
-        window.active_section = $("#main_display")
+    active_section.fadeOut 250, ->
+        active_section = $("#main_display")
         $("#main_display").fadeIn(250)
 
 displayTools = ->
-    window.active_section.fadeOut 250, ->
-        window.active_section = $("#tools")
+    active_section.fadeOut 250, ->
+        active_section = $("#tools")
         $("#tools").fadeIn 250
 
 displayNAT = ->
     table = $("#nat table#active_connections")
     table.find("tbody tr").remove()
     $("<tr><td>Loading...</td><td>Loading...</td><td>Loading...</td><td>Loading...</td></tr>").appendTo(table.find("tbody"))
-    window.active_section.fadeOut 250, ->
-        window.active_section = $("#nat")
+    active_section.fadeOut 250, ->
+        active_section = $("#nat")
         $("#nat").fadeIn(250)
 
     $.getJSON "/nat.json", (data) ->
@@ -260,7 +261,7 @@ updateClients = (data) ->
     return resizeGraph
 
 $ ->
-    window.active_section = $("#main_display")
+    active_section = $("#main_display")
 
     $("#display_option").change ->
         updateStatistics()
