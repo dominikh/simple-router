@@ -274,12 +274,11 @@ resolveIP = (ip) ->
 
 
 updateClients = (data) ->
-    return if (data.Out == 0 && data.In == 0) || data.Host == "total"
-
     row = $("#clients tr[data-ip='" + data.Host + "']")
     resizeGraph = false
 
     if row.length == 0
+        return false if (data.Out == 0 && data.In == 0) || data.Host == "total"
         resolveIP(data.Host)
 
         row = $("<tr data-hostname='" + data.Host + "' data-ip='" + data.Host + "'><td><a href='' title='" + data.Host + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Host, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
