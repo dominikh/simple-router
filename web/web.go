@@ -124,13 +124,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	IndexTemplate.Execute(w, nil)
 }
 
-func internetHandler(w http.ResponseWriter, r *http.Request) {
-	InternetTemplate, _ := template.New("internet.html").Funcs(funcMap).ParseFiles("internet.html", "header.html", "footer.html")
-	wanEth, _ := net.InterfaceByName("eth0")
-
-	InternetTemplate.Execute(w, InternetData{wanEth})
-}
-
 func natJsonHandler(w http.ResponseWriter, r *http.Request) {
 	natEntries, err := nat.GetNAT(true)
 	if err != nil {
@@ -246,7 +239,6 @@ func main() {
 	}
 
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/internet/", internetHandler)
 	http.HandleFunc("/nat.json", natJsonHandler)
 	http.HandleFunc("/memory_usage.json", memoryUsageJsonHandler)
 	http.HandleFunc("/uuid", uuidHandler)
