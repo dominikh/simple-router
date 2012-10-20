@@ -1,4 +1,3 @@
-active_section = null
 uuid = null
 ResolvedIPs = {}
 
@@ -55,41 +54,84 @@ makeTableScroll = (el) ->
             height += row.clientHeight
         wrapper.style.height = height + "px"
 
-updateStatistics = ->
-    exp = $("#display_option").val()
-    rows = $("#traffic_stats > tbody > tr")[1..-1]
-    for row in rows
-        for td in $(row).children()[1..-1]
-            td.innerHTML = formatByteCount(td.getAttribute("data-bytes"), 1000, exp)
-    return null
+class Page
+    active_section = null
 
-displayMemoryUsage = ->
-    $(".system_information table.memory_usage").fadeToggle(250)
+    constructor: (active_section) ->
+        @active_section = (active_section)
+        $("#display_option").change ->
+            updateStatistics()
 
-displayMain = ->
-    active_section.fadeOut 250, ->
-        active_section = $("#main_display")
-        $("#main_display").fadeIn(250)
+        $("table.sortable").each (_, obj) ->
+            $(obj).tablesorter()
 
-displayTools = ->
-    active_section.fadeOut 250, ->
-        active_section = $("#tools")
-        $("#tools").fadeIn 250
+        makeTableScroll $("#clients table")[0]
 
-displayNAT = ->
-    table = $("#nat table#active_connections")
-    table.find("tbody tr").remove()
-    $("<tr><td>Loading...</td><td>Loading...</td><td>Loading...</td><td>Loading...</td></tr>").appendTo(table.find("tbody"))
-    active_section.fadeOut 250, ->
-        active_section = $("#nat")
-        $("#nat").fadeIn(250)
+        $("#link_memory").click ->
+            displayMemoryUsage()
+            return false
 
-    $.getJSON "/nat.json", (data) ->
+        $("#link_nat").click ->
+            displayNAT()
+            return false
+
+        $("#link_main").click ->
+            displayMain()
+            return false
+
+        $("#link_tools").click ->
+            displayTools()
+            return false
+
+        $("#start_capture").click ->
+            $("#start_capture")[0].disabled = true
+            $("#stop_capture")[0].disabled = false
+            startCapture()
+
+        $("#stop_capture").click ->
+            $("#start_capture")[0].disabled = false
+            $("#stop_capture")[0].disabled = true
+            stopCapture()
+
+        displayTrafficGraph()
+        displaySystemData()
+
+
+    displayMemoryUsage: =>
+        $(".system_information table.memory_usage").fadeToggle(250)
+
+    displayMain: =>
+        @active_section.fadeOut 250, =>
+            @active_section = $("#main_display")
+            $("#main_display").fadeIn(250)
+
+    displayTools: =>
+        @active_section.fadeOut 250, =>
+            @active_section = $("#tools")
+            $("#tools").fadeIn 250
+
+    displayNAT: =>
+        table = $("#nat table#active_connections")
         table.find("tbody tr").remove()
-        for entry in data
-            row = $("<tr class='" + entry.State.toLowerCase() + "'><td>" + entry.Protocol + "</td><td><a href=''>" + entry.SourceAddress  + ":" + entry.SourcePort + "</a></td><td><a href=''>" + entry.DestinationAddress + ":" + entry.DestinationPort + "</a></td><td>" + entry.State + "</td></tr>")
-            row.appendTo(table.find("tbody"))
-        table.trigger("update")
+        $("<tr><td>Loading...</td><td>Loading...</td><td>Loading...</td><td>Loading...</td></tr>").appendTo(table.find("tbody"))
+        @active_section.fadeOut 250, =>
+            @active_section = $("#nat")
+            $("#nat").fadeIn(250)
+
+        $.getJSON "/nat.json", (data) ->
+            table.find("tbody tr").remove()
+            for entry in data
+                row = $("<tr class='" + entry.State.toLowerCase() + "'><td>" + entry.Protocol + "</td><td><a href=''>" + entry.SourceAddress  + ":" + entry.SourcePort + "</a></td><td><a href=''>" + entry.DestinationAddress + ":" + entry.DestinationPort + "</a></td><td>" + entry.State + "</td></tr>")
+                row.appendTo(table.find("tbody"))
+            table.trigger("update")
+
+    updateStatistics: =>
+        exp = $("#display_option").val()
+        rows = $("#traffic_stats > tbody > tr")[1..-1]
+        for row in rows
+            for td in $(row).children()[1..-1]
+                td.innerHTML = formatByteCount(td.getAttribute("data-bytes"), 1000, exp)
+        return null
 
 startCapture = ->
     $.get "/uuid", "", (data) ->
@@ -262,46 +304,8 @@ updateClients = (data) ->
     return resizeGraph
 
 $ ->
-    active_section = $("#main_display")
-
-    $("#display_option").change ->
-        updateStatistics()
-
-    $("table.sortable").each (_, obj) ->
-        $(obj).tablesorter()
-
-    makeTableScroll $("#clients table")[0]
-
-    $("#link_memory").click ->
-        displayMemoryUsage()
-        return false
-
-    $("#link_nat").click ->
-        displayNAT()
-        return false
-
-    $("#link_main").click ->
-        displayMain()
-        return false
-
-    $("#link_tools").click ->
-        displayTools()
-        return false
-
-    $("#start_capture").click ->
-        $("#start_capture")[0].disabled = true
-        $("#stop_capture")[0].disabled = false
-        startCapture()
-
-    $("#stop_capture").click ->
-        $("#start_capture")[0].disabled = false
-        $("#stop_capture")[0].disabled = true
-        stopCapture()
-
-    updateStatistics()
-
-    displayTrafficGraph()
-    displaySystemData()
+    page = new Page($("#main_display"))
+    page.updateStatistics()
 
 displayTrafficGraph = ->
     graph = new TrafficGraph($("#live_graph"))
