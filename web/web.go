@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dominikh/simple-router/hwmon"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/memory"
 	"github.com/dominikh/simple-router/nat"
+	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
 	"html/template"
 	"io"
@@ -22,17 +22,6 @@ import (
 	"sync"
 	"time"
 )
-
-type InterfaceData struct {
-	LAN *net.Interface
-	WAN *net.Interface
-}
-
-type SystemData struct {
-	Memory       memory.Stats
-	Interfaces   InterfaceData
-	Temperatures map[string]float64
-}
 
 type InternetData struct {
 	WAN *net.Interface
@@ -57,6 +46,7 @@ type Rate struct {
 }
 
 var tm = traffic.NewMonitor(500 * time.Millisecond)
+var sm = system.NewMonitor(10 * time.Second)
 var captures = NewCaptureManager()
 
 func trafficServer(ws *websocket.Conn) {
@@ -271,49 +261,24 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func systemDataServer(ws *websocket.Conn) {
+	ch := make(chan interface{}, 1)
+	sm.RegisterChannel(ch)
+
 	for {
-		memory := memory.GetStats()
+		data := (<-ch).(*system.Data)
 
-		lanEth, _ := net.InterfaceByName("eth1")
-		wanEth, _ := net.InterfaceByName("eth0")
-
-		iData := InterfaceData{lanEth, wanEth}
-
-		mon1 := hwmon.HWMon{"hwmon0", []string{"2", "3"}}
-		mon2 := hwmon.HWMon{"hwmon1", []string{"1"}}
-
-		temps1, err := mon1.Temperatures()
-		if err != nil {
-			panic(err)
-		}
-		temps2, err := mon2.Temperatures()
-		if err != nil {
-			panic(err)
-		}
-
-		allTemps := make(map[string]float64)
-		for key, value := range temps1 {
-			allTemps[key] = value
-		}
-
-		for key, value := range temps2 {
-			allTemps[key] = value
-		}
-
-		data := SystemData{memory, iData, allTemps}
-
-		err = websocket.JSON.Send(ws, data)
+		err := websocket.JSON.Send(ws, data)
 		if err != nil {
 			fmt.Println(err)
+			sm.UnregisterChannel(ch)
 			break
 		}
-
-		time.Sleep(10 * time.Second)
 	}
 }
 
 func main() {
 	go tm.Start()
+	go sm.Start()
 
 	srv := &http.Server{
 		ReadTimeout:  2 * time.Second,
