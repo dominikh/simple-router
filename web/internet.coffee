@@ -56,7 +56,7 @@ makeTableScroll = (el) ->
         wrapper.style.height = height + "px"
 
 updateStatistics = ->
-    exp = $("#display_option")[0].value
+    exp = $("#display_option").val()
     rows = $("#traffic_stats > tbody > tr")[1..-1]
     for row in rows
         for td in $(row).children()[1..-1]
@@ -94,7 +94,7 @@ displayNAT = ->
 startCapture = ->
     $.get "/uuid", "", (data) ->
         uuid = data
-        window.location = "/traffic_capture?uuid=" + data + "&interface=" + $("#capture_interface")[0].value
+        window.location = "/traffic_capture?uuid=" + data + "&interface=" + $("#capture_interface").val()
 
 stopCapture = ->
     $.get "/stop_capture", {uuid: uuid}
@@ -220,7 +220,7 @@ class TrafficGraph
         @chart.setSize(container.width(), container.height(), false)
 
 updateThisMonthsStatistics = (data) ->
-    exp = $("#display_option")[0].value
+    exp = $("#display_option").val()
     thisMonth = $("#traffic_stats > tbody > tr:first > td")
     thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
     thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
@@ -232,11 +232,12 @@ resolveIP = (ip) ->
 
 
 updateClients = (data) ->
-    row = $("#clients tr[data-ip='" + data.Host + "']")[0]
+    return if (data.Out == 0 && data.In == 0) || data.Host == "total"
+
+    row = $("#clients tr[data-ip='" + data.Host + "']")
     resizeGraph = false
-    if !row
-        if (data.Out == 0 && data.In == 0) || data.Host == "total"
-            return
+
+    if row.length == 0
         resolveIP(data.Host)
 
         row = $("<tr data-hostname='" + data.Host + "' data-ip='" + data.Host + "'><td><a href='' title='" + data.Host + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Host, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
@@ -244,19 +245,19 @@ updateClients = (data) ->
 
         resizeGraph = true
     else
-        if (hostname = ResolvedIPs[data.Host]) && ($(row).attr("data-hostname") != hostname)
-            $(row).attr("data-hostname", hostname)
-            $(row).find("td a").attr("title", hostname + " &lt;" + data.Host + "&gt;")
-            $(row).find("td a")[0].innerHTML = ellipsize(hostname, 25)
+        if (hostname = ResolvedIPs[data.Host]) && (row.attr("data-hostname") != hostname)
+            row.attr("data-hostname", hostname)
+            row.find("td a").attr("title", hostname + " &lt;" + data.Host + "&gt;")
+            row.find("td a").html(ellipsize(hostname, 25))
             resizeGraph = true
-    up = $(row).find("span.up")[0]
-    down = $(row).find("span.down")[0]
+    up = row.find("span.up")
+    down = row.find("span.down")
 
-    up.innerHTML = formatByteCount(data.Out, 1000) + "/s"
-    down.innerHTML = formatByteCount(data.In, 1000) + "/s"
+    up.html(formatByteCount(data.Out, 1000) + "/s")
+    down.html(formatByteCount(data.In, 1000) + "/s")
 
-    $(up).css("color", byteColor(data.Out, "up"))
-    $(down).css("color", byteColor(data.In, "down"))
+    up.css("color", byteColor(data.Out, "up"))
+    down.css("color", byteColor(data.In, "down"))
 
     return resizeGraph
 
@@ -346,7 +347,7 @@ updateMemoryStat = (memory, stat) ->
 
     el.css("width", percentage + "%")
     el.attr("title", text + " used (" + percentage.toFixed(2) + "%)")
-    $(".system_information .memory_usage ." + stat.toLowerCase())[0].innerHTML = text + " (" + percentage.toFixed(2) + "%)"
+    $(".system_information .memory_usage ." + stat.toLowerCase()).html(text + " (" + percentage.toFixed(2) + "%)")
 
 Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
     point = this
