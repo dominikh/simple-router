@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/nat"
@@ -18,7 +17,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -159,44 +157,6 @@ func memoryUsageJsonHandler(w http.ResponseWriter, r *http.Request) {
 
 func uuidHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(strconv.FormatInt(int64(time.Now().UnixNano()), 10)))
-}
-
-type CaptureManager struct {
-	sync.RWMutex
-	captures map[string]*exec.Cmd
-}
-
-func (cm *CaptureManager) AddCapture(uuid string, command *exec.Cmd) error {
-	cm.Lock()
-	defer cm.Unlock()
-
-	_, ok := cm.captures[uuid]
-	if ok {
-		return errors.New("UUID already in use")
-	}
-
-	cm.captures[uuid] = command
-
-	return nil
-}
-
-func (cm *CaptureManager) GetCapture(uuid string) (*exec.Cmd, bool) {
-	cm.RLock()
-	defer cm.RUnlock()
-
-	capture, ok := cm.captures[uuid]
-	return capture, ok
-}
-
-func (cm *CaptureManager) RemoveCapture(uuid string) {
-	cm.Lock()
-	defer cm.Unlock()
-
-	delete(cm.captures, uuid)
-}
-
-func NewCaptureManager() *CaptureManager {
-	return &CaptureManager{sync.RWMutex{}, make(map[string]*exec.Cmd)}
 }
 
 func trafficCaptureHandler(w http.ResponseWriter, r *http.Request) {

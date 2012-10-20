@@ -1,5 +1,5 @@
 #!/bin/sh
-go build web.go
+go build
 scss screen.scss css/screen.css
 ~/.npm/coffee-script/1.3.3/package/bin/coffee -c internet.coffee
 mv internet.js js/
