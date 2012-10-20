@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dominikh/simple-router/lookup"
-	"github.com/dominikh/simple-router/memory"
 	"github.com/dominikh/simple-router/nat"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
@@ -149,7 +148,7 @@ func natJsonHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func memoryUsageJsonHandler(w http.ResponseWriter, r *http.Request) {
-	memory := memory.GetStats()
+	memory := system.GetMemoryStats()
 	b, err := json.Marshal(memory)
 	if err != nil {
 		panic(err)

@@ -1,4 +1,4 @@
-package memory
+package system
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Stats struct {
+type MemoryStats struct {
 	Total   uint64
 	Free    uint64
 	Buffers uint64
@@ -14,7 +14,7 @@ type Stats struct {
 	Used  uint64
 }
 
-func GetStats() Stats {
+func GetMemoryStats() MemoryStats {
 	values := make(map[string]uint64)
 	b, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
@@ -31,7 +31,7 @@ func GetStats() Stats {
 		values[key] = value * 1000
 	}
 
-	return Stats{
+	return MemoryStats{
 		values["MemTotal"],
 		values["MemFree"],
 		values["Buffers"],

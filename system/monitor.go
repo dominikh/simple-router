@@ -1,8 +1,6 @@
 package system
 
 import (
-	"github.com/dominikh/simple-router/hwmon"
-	"github.com/dominikh/simple-router/memory"
 	"github.com/dominikh/simple-router/monitor"
 	"net"
 	"time"
@@ -14,7 +12,7 @@ type InterfaceData struct {
 }
 
 type Data struct {
-	Memory       memory.Stats
+	Memory       MemoryStats
 	Interfaces   InterfaceData
 	Temperatures map[string]float64
 }
@@ -22,15 +20,15 @@ type Data struct {
 func NewMonitor(delay time.Duration) *monitor.Monitor {
 	return monitor.NewMonitor(delay, func(m *monitor.Monitor) {
 		for {
-			memory := memory.GetStats()
+			memory := GetMemoryStats()
 
 			lanEth, _ := net.InterfaceByName("eth1")
 			wanEth, _ := net.InterfaceByName("eth0")
 
 			iData := InterfaceData{lanEth, wanEth}
 
-			mon1 := hwmon.HWMon{"hwmon0", []string{"2", "3"}}
-			mon2 := hwmon.HWMon{"hwmon1", []string{"1"}}
+			mon1 := HWMon{"hwmon0", []string{"2", "3"}}
+			mon2 := HWMon{"hwmon1", []string{"1"}}
 
 			temps1, err := mon1.Temperatures()
 			if err != nil {

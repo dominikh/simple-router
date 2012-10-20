@@ -1,4 +1,4 @@
-package hwmon
+package system
 
 import (
 	"io/ioutil"
