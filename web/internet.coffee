@@ -55,10 +55,7 @@ makeTableScroll = (el) ->
         wrapper.style.height = "#{height}px"
 
 class Page
-    active_section = null
-
-    constructor: (active_section) ->
-        @active_section = (active_section)
+    constructor: (@active_section) ->
         $("#display_option").change ->
             updateStatistics()
 
@@ -139,98 +136,86 @@ startCapture = ->
         window.location = "/traffic_capture?uuid=#{data}&interface=#{$("#capture_interface").val()}"
 
 stopCapture = ->
-    $.get "/stop_capture", {uuid: uuid}
+    $.get "/stop_capture", {uuid}
 
 
 class TrafficGraph
-    update: true
-    backlog: []
     constructor: (renderTarget) ->
-        @chart = new Highcharts.Chart({
-            chart: {
-                animation: {
-                    duration: 400,
-                    easing: 'linear',
-                },
-                renderTo: renderTarget[0],
-                type: 'areaspline',
-                marginLeft: 80,
-                marginRight: 10,
-                showAxes: true,
-                alignTicks: false,
-                zoomType: "x",
-            },
-            title: {
+        @update = true
+        @backlog = []
+        @chart = new Highcharts.Chart(
+            chart:
+                animation:
+                    duration: 400
+                    easing: 'linear'
+                renderTo: renderTarget[0]
+                type: 'areaspline'
+                marginLeft: 80
+                marginRight: 10
+                showAxes: true
+                alignTicks: false
+                zoomType: "x"
+            title:
                 text: null
-            },
-            xAxis: {
-                type: 'datetime',
-            },
+            xAxis:
+                type: 'datetime'
             yAxis: [
                 {
-                    title: false,
-                    showFirstLabel: false,
-                    height: 200,
-                    labels: {
+                    title: false
+                    showFirstLabel: false
+                    height: 200
+                    labels:
                         formatter: ->
                             formatByteCount(this.value, 1000) + "/s"
-                    },
-                },
+                }
                 {
-                    title: false,
-                    showFirstLabel: true,
-                    labels: {
+                    title: false
+                    showFirstLabel: true
+                    labels:
                         formatter: ->
                             formatByteCount(-this.value, 1000) + "/s"
-                    },
-                    offset: 0,
-                    top: 210,
-                    height: 200,
-                    max: 0,
-                    threshold: 0,
-                    endOnTick: true,
-                    startOnTick: true,
+                    offset: 0
+                    top: 210
+                    height: 200
+                    max: 0
+                    threshold: 0
+                    endOnTick: true
+                    startOnTick: true
                 }
-            ],
-            plotOptions: {
-                turboThreshold: 1,
-                areaspline: {
-                    fillOpacity: 0.5,
-                },
-            },
-            tooltip: {
-                crosshairs: true,
-                shared: true,
-            },
-            legend: {
-                enabled: true,
-                layout: 'horizontal',
-                align: 'center',
-                verticalAlign: 'bottom',
-                borderWidth: 0,
-            },
-            exporting: {
+            ]
+            plotOptions:
+                turboThreshold: 1
+                areaspline:
+                    fillOpacity: 0.5
+            tooltip:
+                crosshairs: true
+                shared: true
+            legend:
+                enabled: true
+                layout: 'horizontal'
+                align: 'center'
+                verticalAlign: 'bottom'
+                borderWidth: 0
+            exporting:
                 enabled: false
-            },
-            credits: {
+            credits:
                 enabled: false
-            },
             series: [
                 {
-                    name: 'Downstream',
-                    color: "#52b86f",
-                    yAxis: 0,
+                    name: 'Downstream'
+                    color: "#52b86f"
+                    yAxis: 0
                     data: []
-                },
+                }
                 {
-                    name: "Upstream",
-                    color: "#aa4643",
-                    yAxis: 1,
-                    data: [],
+                    name: "Upstream"
+                    color: "#aa4643"
+                    yAxis: 1
+                    data: []
                     fillOpacity: 0.2
-                },
+                }
             ]
-        })
+        )
 
         renderTarget.hover(
             => @update = false
@@ -309,10 +294,7 @@ $ ->
 displayTrafficGraph = ->
     graph = new TrafficGraph($("#live_graph"))
 
-    if "WebSocket" of window
-        socket = new WebSocket("ws://192.168.1.1:8000/websocket/traffic_data/")
-    else
-        socket = new MozWebSocket("ws://192.168.1.1:8000/websocket/traffic_data/")
+    socket = new (WebSocket ? MozWebSocket)("ws://192.168.1.1:8000/websocket/traffic_data/")
 
     socket.onmessage = (msg) ->
         packet = $.parseJSON(msg.data)
@@ -330,10 +312,7 @@ displayTrafficGraph = ->
 
 
 displaySystemData = ->
-    if "WebSocket" of window
-        socket = new WebSocket("ws://192.168.1.1:8000/websocket/system_data/")
-    else
-        socket = new MozWebSocket("ws://192.168.1.1:8000/websocket/system_data/")
+    socket = new (WebSocket ? MozWebSocket)("ws://192.168.1.1:8000/websocket/system_data/")
 
     socket.onmessage = (msg) ->
         data = $.parseJSON(msg.data)
