@@ -52,7 +52,7 @@ makeTableScroll = (el) ->
     if rowsInTable > maxRows
         for row in $(el.rows)[0...maxRows]
             height += row.clientHeight
-        wrapper.style.height = height + "px"
+        wrapper.style.height = "#{height}px"
 
 class Page
     active_section = null
@@ -121,7 +121,7 @@ class Page
         $.getJSON "/nat.json", (data) ->
             table.find("tbody tr").remove()
             for entry in data
-                row = $("<tr class='" + entry.State.toLowerCase() + "'><td>" + entry.Protocol + "</td><td><a href=''>" + entry.SourceAddress  + ":" + entry.SourcePort + "</a></td><td><a href=''>" + entry.DestinationAddress + ":" + entry.DestinationPort + "</a></td><td>" + entry.State + "</td></tr>")
+                row = $("<tr class='#{entry.State.toLowerCase()}'><td>#{entry.Protocol}</td><td><a href=''>#{entry.SourceAddress}:#{entry.SourcePort}</a></td><td><a href=''>#{entry.DestinationAddress}:#{entry.DestinationPort}</a></td><td>#{entry.State}</td></tr>")
                 row.appendTo(table.find("tbody"))
             table.trigger("update")
 
@@ -136,7 +136,7 @@ class Page
 startCapture = ->
     $.get "/uuid", "", (data) ->
         uuid = data
-        window.location = "/traffic_capture?uuid=" + data + "&interface=" + $("#capture_interface").val()
+        window.location = "/traffic_capture?uuid=#{data}&interface=#{$("#capture_interface").val()}"
 
 stopCapture = ->
     $.get "/stop_capture", {uuid: uuid}
@@ -269,26 +269,26 @@ updateThisMonthsStatistics = (data) ->
 
 resolveIP = (ip) ->
     return if ResolvedIPs[ip]
-    $.ajax "/resolve_ip/" + ip, success: (data) ->
+    $.ajax "/resolve_ip/#{ip}", success: (data) ->
         ResolvedIPs[ip] = data
 
 
 updateClients = (data) ->
-    row = $("#clients tr[data-ip='" + data.Host + "']")
+    row = $("#clients tr[data-ip='#{data.Host}']")
     resizeGraph = false
 
     if row.length == 0
         return false if (data.Out == 0 && data.In == 0) || data.Host == "total"
         resolveIP(data.Host)
 
-        row = $("<tr data-hostname='" + data.Host + "' data-ip='" + data.Host + "'><td><a href='' title='" + data.Host + " &lt;" + data.Host + "&gt;'>" + ellipsize(data.Host, 25) + "</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
+        row = $("<tr data-hostname='#{data.Host}' data-ip='#{data.Host}'><td><a href='' title='#{data.Host} &lt;#{data.Host}&gt;'>#{ellipsize(data.Host, 25)}</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
         row.appendTo("#clients tbody")
 
         resizeGraph = true
     else
         if (hostname = ResolvedIPs[data.Host]) && (row.attr("data-hostname") != hostname)
             row.attr("data-hostname", hostname)
-            row.find("td a").attr("title", hostname + " &lt;" + data.Host + "&gt;")
+            row.find("td a").attr("title", "#{hostname} &lt;#{data.Host}&gt;")
             row.find("td a").html(ellipsize(hostname, 25))
             resizeGraph = true
     up = row.find("span.up")
@@ -343,14 +343,14 @@ displaySystemData = ->
         updateMemoryStat(data["Memory"], "cache")
 
 updateMemoryStat = (memory, stat) ->
-    el = $(".system_information .progressbar ." + stat.toLowerCase())
+    el = $(".system_information .progressbar .#{stat.toLowerCase()}")
     stat = capitalize(stat)
     percentage = (memory[stat] / memory["Total"]) * 100
     text = formatByteCount(memory[stat], 1024, -1)
 
     el.css("width", percentage + "%")
-    el.attr("title", text + " used (" + percentage.toFixed(2) + "%)")
-    $(".system_information .memory_usage ." + stat.toLowerCase()).html(text + " (" + percentage.toFixed(2) + "%)")
+    el.attr("title", text + " used (#{percentage.toFixed(2)}%)")
+    $(".system_information .memory_usage .#{stat.toLowerCase()}").html(text + " (" + percentage.toFixed(2) + "%)")
 
 Highcharts.Point.prototype.tooltipFormatter = (useHeader) ->
     point = this
