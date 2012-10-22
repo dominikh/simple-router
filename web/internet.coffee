@@ -56,29 +56,29 @@ makeTableScroll = (el) ->
 
 class Page
     constructor: (@active_section) ->
-        $("#display_option").change ->
-            updateStatistics()
+        $("#display_option").change =>
+            @.updateStatistics()
 
         $("table.sortable").each (_, obj) ->
             $(obj).tablesorter()
 
         makeTableScroll $("#clients table")[0]
 
-        $("#link_memory").click ->
-            displayMemoryUsage()
-            return false
+        $("#link_memory").click (e) =>
+            e.preventDefault()
+            @.displayMemoryUsage()
 
-        $("#link_nat").click ->
-            displayNAT()
-            return false
+        $("#link_nat").click (e) =>
+            e.preventDefault()
+            @.displayNAT()
 
-        $("#link_main").click ->
-            displayMain()
-            return false
+        $("#link_main").click (e) =>
+            e.preventDefault()
+            @.displayMain()
 
-        $("#link_tools").click ->
-            displayTools()
-            return false
+        $("#link_tools").click (e) =>
+            e.preventDefault()
+            @.displayTools()
 
         $("#start_capture").click ->
             $("#start_capture")[0].disabled = true
