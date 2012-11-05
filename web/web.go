@@ -50,8 +50,9 @@ func trafficServer(ws *websocket.Conn) {
 	ch := make(chan interface{}, 1)
 	tm.RegisterChannel(ch)
 
-	for {
-		stat := (<-ch).(*traffic.ProgressiveStat)
+	for item := range ch {
+		stat := item.(*traffic.ProgressiveStat)
+
 		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
 		err := websocket.JSON.Send(ws, msg)
 		if err != nil {
@@ -216,8 +217,8 @@ func systemDataServer(ws *websocket.Conn) {
 	ch := make(chan interface{}, 1)
 	sm.RegisterChannel(ch)
 	sm.Force()
-	for {
-		data := (<-ch).(*system.Data)
+	for item := range ch {
+		data := item.(*system.Data)
 
 		err := websocket.JSON.Send(ws, data)
 		if err != nil {
