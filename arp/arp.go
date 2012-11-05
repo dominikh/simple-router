@@ -2,6 +2,7 @@ package arp
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net"
 )
@@ -43,5 +44,5 @@ func IPToHardwareAddress(ip net.IP) (net.HardwareAddr, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("Unknown IP %s", ip)
 }
