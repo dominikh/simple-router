@@ -134,7 +134,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func natJsonHandler(w http.ResponseWriter, r *http.Request) {
-	natEntries := conntrack.Filter(getConntrackFlows(), conntrack.SNATFilter|conntrack.DNATFilter)
+	natEntries := getConntrackFlows().Filter(conntrack.SNATFilter|conntrack.DNATFilter)
 	natEntriesDumbedDown := make([]NATEntry, len(natEntries))
 
 	for index, entry := range natEntries {
@@ -246,8 +246,8 @@ func systemDataServer(ws *websocket.Conn) {
 	}
 }
 
-func getConntrackFlows() []conntrack.Flow {
-	var flows []conntrack.Flow
+func getConntrackFlows() conntrack.FlowSlice {
+	var flows conntrack.FlowSlice
 
 	cmd := exec.Command("sudo", "/home/admin/bin/dump_conntrack")
 	stdout, err := cmd.StdoutPipe()
