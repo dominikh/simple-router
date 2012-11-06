@@ -6,6 +6,19 @@ import (
 	"net"
 )
 
+func Resolve(ip net.IP, noop bool) string {
+	if noop {
+		return ip.String()
+	}
+
+	lookup, err := net.LookupAddr(ip.String())
+	if err == nil && len(lookup) > 0 {
+		return lookup[0]
+	}
+
+	return ip.String()
+}
+
 func IPToHostname(ip net.IP) (string, error) {
 	lookup, _ := net.LookupAddr(ip.String())
 
