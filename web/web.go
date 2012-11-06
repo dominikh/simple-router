@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"os"
@@ -71,64 +70,8 @@ func trafficServer(ws *websocket.Conn) {
 	}
 }
 
-func formatByteCount(bytes uint64, base uint16, force int8) string {
-	var exp uint8
-	var units [6]string
-	filler := ""
-	format := "%.2f %s%sB"
-
-	if bytes < uint64(base) {
-		return fmt.Sprintf(format, bytes, "", "")
-	}
-
-	if force >= 0 {
-		exp = uint8(force)
-	} else {
-		exp = uint8(math.Floor(math.Log10(float64(bytes)) / math.Log10(float64(base))))
-	}
-
-	if base == 1000 {
-		units = [6]string{"k", "M", "G", "T", "P", "E"}
-	} else {
-		units = [6]string{"K", "M", "G", "T", "P", "E"}
-		if exp > 0 {
-			filler = "i"
-		}
-	}
-
-	return fmt.Sprintf(format, float64(bytes)/math.Pow(float64(base), float64(exp)), units[exp-1], filler)
-}
-
-var funcMap = template.FuncMap{
-	"list": func(addrs []net.Addr) string {
-		ips := make([]string, 0, len(addrs))
-		for _, addr := range addrs {
-			ips = append(ips, addr.String())
-		}
-
-		return strings.Join(ips, ", ")
-	},
-
-	"downcase": func(s string) string {
-		return strings.ToLower(s)
-	},
-
-	"temperatures": func(temperatures map[string]float64) string {
-		temps := make([]string, 0, len(temperatures))
-		for _, temp := range temperatures {
-			temps = append(temps, fmt.Sprintf("%.2f°C", temp))
-		}
-
-		return strings.Join(temps, " / ")
-	},
-
-	"firstAddr": func(addrs []net.Addr) string {
-		return addrs[0].String()
-	},
-}
-
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	IndexTemplate, _ := template.New("index.html").Funcs(funcMap).ParseFiles("index.html", "header.html", "footer.html")
+	IndexTemplate, _ := template.New("index.html").ParseFiles("index.html", "header.html", "footer.html")
 
 	IndexTemplate.Execute(w, nil)
 }
