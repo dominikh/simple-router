@@ -2,8 +2,10 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/dominikh/simple-router/conntrack"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/nat"
 	"github.com/dominikh/simple-router/system"
@@ -24,10 +26,6 @@ type InternetData struct {
 	WAN *net.Interface
 }
 
-type NATData struct {
-	Connections []nat.Entry
-}
-
 type Packet struct {
 	Type string
 	Data interface{}
@@ -40,6 +38,15 @@ type Rate struct {
 	Out      uint64
 	TotalIn  uint64
 	TotalOut uint64
+}
+
+type NATEntry struct {
+	Protocol           string
+	SourceAddress      string
+	SourcePort         uint16
+	DestinationAddress string
+	DestinationPort    uint16
+	State              string
 }
 
 var tm = traffic.NewMonitor(500 * time.Millisecond)
@@ -126,12 +133,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func natJsonHandler(w http.ResponseWriter, r *http.Request) {
-	natEntries, err := nat.GetNAT(true)
-	if err != nil {
-		panic(err)
+	natEntries := nat.GetNAT(getConntrackFlows(), nat.SNAT|nat.DNAT)
+	natEntriesDumbedDown := make([]NATEntry, len(natEntries))
+
+	for index, entry := range natEntries {
+		natEntriesDumbedDown[index] = NATEntry{
+			entry.Protocol,
+			lookup.Resolve(entry.Original.Source, false),
+			entry.Original.SPort,
+			lookup.Resolve(entry.Original.Destination, false),
+			entry.Original.DPort,
+			entry.State,
+		}
 	}
 
-	b, err := json.Marshal(natEntries)
+	b, err := json.Marshal(natEntriesDumbedDown)
 	if err != nil {
 		panic(err)
 	}
@@ -227,6 +243,22 @@ func systemDataServer(ws *websocket.Conn) {
 			break
 		}
 	}
+}
+
+func getConntrackFlows() []conntrack.Flow {
+	var flows []conntrack.Flow
+
+	cmd := exec.Command("sudo", "/home/admin/bin/dump_conntrack")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+	cmd.Start()
+	dec := gob.NewDecoder(stdout)
+	dec.Decode(&flows)
+	cmd.Wait()
+
+	return flows
 }
 
 func main() {
