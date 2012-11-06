@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/dominikh/simple-router/conntrack"
 	"github.com/dominikh/simple-router/lookup"
-	"github.com/dominikh/simple-router/nat"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
 
@@ -135,7 +134,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func natJsonHandler(w http.ResponseWriter, r *http.Request) {
-	natEntries := nat.GetNAT(getConntrackFlows(), nat.SNAT|nat.DNAT)
+	natEntries := conntrack.Filter(getConntrackFlows(), conntrack.SNATFilter|conntrack.DNATFilter)
 	natEntriesDumbedDown := make([]NATEntry, len(natEntries))
 
 	for index, entry := range natEntries {

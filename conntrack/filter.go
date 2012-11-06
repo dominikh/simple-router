@@ -1,18 +1,16 @@
-package nat
+package conntrack
 
 import (
-	"github.com/dominikh/simple-router/conntrack"
-
 	"net"
 )
 
-type Flag uint8
+type FilterFlag uint8
 
 const (
-	SNAT Flag = 1 << iota
-	DNAT
-	Routed
-	Local
+	SNATFilter FilterFlag = 1 << iota
+	DNATFilter
+	RoutedFilter
+	LocalFilter
 )
 
 var localIPs = make([]*net.IPNet, 0)
@@ -38,29 +36,29 @@ func init() {
 	}
 }
 
-func GetSNAT(flows []conntrack.Flow) []conntrack.Flow {
-	return GetNAT(flows, SNAT)
+func FilterSNAT(flows []Flow) []Flow {
+	return Filter(flows, SNATFilter)
 }
 
-func GetDNAT(flows []conntrack.Flow) []conntrack.Flow {
-	return GetNAT(flows, DNAT)
+func FilterDNAT(flows []Flow) []Flow {
+	return Filter(flows, DNATFilter)
 }
 
-func GetRouted(flows []conntrack.Flow) []conntrack.Flow {
-	return GetNAT(flows, Routed)
+func FilterRouted(flows []Flow) []Flow {
+	return Filter(flows, RoutedFilter)
 }
 
-func GetLocal(flows []conntrack.Flow) []conntrack.Flow {
-	return GetNAT(flows, Local)
+func FilterLocal(flows []Flow) []Flow {
+	return Filter(flows, LocalFilter)
 }
 
-func GetNAT(flows []conntrack.Flow, which Flag) []conntrack.Flow {
-	natFlows := make([]conntrack.Flow, 0, len(flows))
+func Filter(flows []Flow, which FilterFlag) []Flow {
+	natFlows := make([]Flow, 0, len(flows))
 
-	snat := (which & SNAT) > 0
-	dnat := (which & DNAT) > 0
-	local := (which & Local) > 0
-	routed := (which & Routed) > 0
+	snat := (which & SNATFilter) > 0
+	dnat := (which & DNATFilter) > 0
+	local := (which & LocalFilter) > 0
+	routed := (which & RoutedFilter) > 0
 
 	for _, flow := range flows {
 		if (snat && isSNAT(flow)) ||
@@ -75,7 +73,7 @@ func GetNAT(flows []conntrack.Flow, which Flag) []conntrack.Flow {
 	return natFlows
 }
 
-func isSNAT(flow conntrack.Flow) bool {
+func isSNAT(flow Flow) bool {
 	// SNATed flows should reply to our WAN IP, not a LAN IP.
 	if flow.Original.Source.Equal(flow.Reply.Destination) {
 		return false
@@ -88,7 +86,7 @@ func isSNAT(flow conntrack.Flow) bool {
 	return true
 }
 
-func isDNAT(flow conntrack.Flow) bool {
+func isDNAT(flow Flow) bool {
 	// Reply must go back to the source; Reply mustn't come from the WAN IP
 	if flow.Original.Source.Equal(flow.Reply.Destination) && !flow.Original.Destination.Equal(flow.Reply.Source) {
 		return true
@@ -102,7 +100,7 @@ func isDNAT(flow conntrack.Flow) bool {
 	return false
 }
 
-func isLocal(flow conntrack.Flow) bool {
+func isLocal(flow Flow) bool {
 	// no NAT
 	if flow.Original.Source.Equal(flow.Reply.Destination) && flow.Original.Destination.Equal(flow.Reply.Source) {
 		// At least one local address
@@ -114,7 +112,7 @@ func isLocal(flow conntrack.Flow) bool {
 	return false
 }
 
-func isRouted(flow conntrack.Flow) bool {
+func isRouted(flow Flow) bool {
 	// no NAT
 	if flow.Original.Source.Equal(flow.Reply.Destination) && flow.Original.Destination.Equal(flow.Reply.Source) {
 		// No local addresses
