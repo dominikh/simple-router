@@ -5,6 +5,7 @@ import (
 	"github.com/dominikh/simple-router/dhcp"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/nat"
+
 	"net"
 )
 
@@ -58,7 +59,6 @@ func Clients() ([]Client, error) {
 		natEntry.SourceAddress, natEntry.SourcePort, natEntry.DestinationAddress, natEntry.DestinationPort = natEntry.DestinationAddress, natEntry.DestinationPort, natEntry.SourceAddress, natEntry.SourcePort
 		natEntriesDSwapped[index] = natEntry
 	}
-
 
 	natEntriesCombined := append(natEntriesS, natEntriesDSwapped...)
 	for _, natEntry := range natEntriesCombined {

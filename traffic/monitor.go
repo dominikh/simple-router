@@ -1,8 +1,9 @@
 package traffic
 
 import (
-	"fmt"
 	"github.com/dominikh/simple-router/monitor"
+
+	"fmt"
 	"log"
 	"time"
 )

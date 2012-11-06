@@ -1,15 +1,17 @@
 package main
 
 import (
-	"code.google.com/p/go.net/websocket"
-	"encoding/gob"
-	"encoding/json"
-	"fmt"
 	"github.com/dominikh/simple-router/conntrack"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/nat"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
+
+	"code.google.com/p/go.net/websocket"
+
+	"encoding/gob"
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"math"

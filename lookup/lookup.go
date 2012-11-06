@@ -3,6 +3,7 @@ package lookup
 import (
 	"github.com/dominikh/simple-router/arp"
 	"github.com/dominikh/simple-router/dhcp"
+
 	"net"
 )
 
