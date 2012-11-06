@@ -90,7 +90,7 @@ class Page
             $("#stop_capture")[0].disabled = true
             stopCapture()
 
-        displayTrafficGraph()
+        @graph = displayTrafficGraph()
         displaySystemData()
 
 
@@ -100,7 +100,9 @@ class Page
     displayMain: =>
         @active_section.fadeOut 250, =>
             @active_section = $("#main_display")
-            $("#main_display").fadeIn(250)
+            $("#main_display").fadeIn(250, =>
+                @graph.updateDimensions()
+            )
 
     displayTools: =>
         @active_section.fadeOut 250, =>
@@ -309,6 +311,7 @@ displayTrafficGraph = ->
             newRow = updateClients(data)
             if newRow
                 graph.updateDimensions()
+    return graph
 
 
 displaySystemData = ->
