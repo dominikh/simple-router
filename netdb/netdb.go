@@ -1,7 +1,6 @@
 package netdb
 
 import (
-	"errors"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -87,57 +86,57 @@ func (this Protoent) Equal(other Protoent) bool {
 	return this.Number == other.Number
 }
 
-func GetProtoByNumber(num int) (Protoent, error) {
+func GetProtoByNumber(num int) (Protoent, bool) {
 	for _, protoent := range Protocols {
 		if protoent.Number == num {
-			return protoent, nil
+			return protoent, true
 		}
 	}
-	return Protoent{}, errors.New("Unknown protocol number")
+	return Protoent{}, false
 }
 
-func GetProtoByName(name string) (Protoent, error) {
+func GetProtoByName(name string) (Protoent, bool) {
 	for _, protoent := range Protocols {
 		if protoent.Name == name {
-			return protoent, nil
+			return protoent, true
 		}
 
 		for _, alias := range protoent.Aliases {
 			if alias == name {
-				return protoent, nil
+				return protoent, true
 			}
 		}
 	}
 
-	return Protoent{}, errors.New("Unknown protocol number")
+	return Protoent{}, false
 }
 
-func GetServByName(name, protocol string) (Servent, error) {
+func GetServByName(name, protocol string) (Servent, bool) {
 	for _, servent := range Services {
 		if servent.Protocol != protocol && protocol != "" {
 			continue
 		}
 
 		if servent.Name == name {
-			return servent, nil
+			return servent, true
 		}
 
 		for _, alias := range servent.Aliases {
 			if alias == name {
-				return servent, nil
+				return servent, true
 			}
 		}
 	}
 
-	return Servent{}, errors.New("Unknown service name/protocol combination")
+	return Servent{}, false
 }
 
-func GetServByPort(port int, protocol string) (Servent, error) {
+func GetServByPort(port int, protocol string) (Servent, bool) {
 	for _, servent := range Services {
 		if servent.Port == port && (servent.Protocol == protocol || protocol == "") {
-			return servent, nil
+			return servent, true
 		}
 	}
 
-	return Servent{}, errors.New("Unknown port/protocol combination")
+	return Servent{}, false
 }
