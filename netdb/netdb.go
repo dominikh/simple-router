@@ -33,7 +33,7 @@ func init() {
 		line = strings.TrimSpace(line)
 		split := strings.SplitN(line, "#", 2)
 		fields := strings.Fields(split[0])
-		if len(fields) < 3 {
+		if len(fields) < 2 {
 			continue
 		}
 
@@ -59,7 +59,7 @@ func init() {
 		line = strings.TrimSpace(line)
 		split := strings.SplitN(line, "#", 2)
 		fields := strings.Fields(split[0])
-		if len(fields) < 3 {
+		if len(fields) < 2 {
 			continue
 		}
 
