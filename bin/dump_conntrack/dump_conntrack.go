@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dominikh/simple-router/conntrack"
+	"github.com/dominikh/conntrack"
 
 	"encoding/gob"
 	"os"

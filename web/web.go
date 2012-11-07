@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/dominikh/simple-router/conntrack"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
+
+	"github.com/dominikh/conntrack"
 
 	"code.google.com/p/go.net/websocket"
 
