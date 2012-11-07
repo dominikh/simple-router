@@ -82,7 +82,7 @@ func natJsonHandler(w http.ResponseWriter, r *http.Request) {
 
 	for index, entry := range natEntries {
 		natEntriesDumbedDown[index] = NATEntry{
-			entry.Protocol,
+			entry.Protocol.Name,
 			lookup.Resolve(entry.Original.Source, false),
 			entry.Original.SPort,
 			lookup.Resolve(entry.Original.Destination, false),
