@@ -1,11 +1,10 @@
 package netdb
 
-// #include <netdb.h>
-import "C"
-
 import (
 	"errors"
-	"unsafe"
+	"io/ioutil"
+	"strconv"
+	"strings"
 )
 
 type Protoent struct {
@@ -14,44 +13,61 @@ type Protoent struct {
 	Number  int
 }
 
+var Protocols []Protoent
+
+func init() {
+	// Load protocols
+	data, err := ioutil.ReadFile("/etc/protocols")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		split := strings.SplitN(line, "#", 2)
+		fields := strings.Fields(split[0])
+		if len(fields) != 3 {
+			continue
+		}
+
+		num, err := strconv.ParseInt(fields[1], 10, 32)
+		if err != nil {
+			panic(err)
+		}
+
+		Protocols = append(Protocols, Protoent{
+			Name:    fields[0],
+			Aliases: strings.Fields(fields[2]),
+			Number:  int(num),
+		})
+	}
+}
+
 func (this Protoent) Equal(other Protoent) bool {
 	return this.Number == other.Number
 }
 
-func cprotoentToProtoent(s *C.struct_protoent) Protoent {
-	var aliases []string
-	p := s.p_aliases
-	q := uintptr(unsafe.Pointer(p))
-	for {
-		p = (**C.char)(unsafe.Pointer(q))
-		if *p == nil {
-			break
-		}
-		aliases = append(aliases, C.GoString(*p))
-		q += unsafe.Sizeof(q)
-	}
-
-	return Protoent{
-		Name:    C.GoString(s.p_name),
-		Aliases: aliases,
-		Number:  int(s.p_proto),
-	}
-}
-
 func GetProtoByNumber(num int) (Protoent, error) {
-	s := C.getprotobynumber(C.int(num))
-	if s == nil {
-		return Protoent{}, errors.New("Unknown protocol number")
+	for _, protoent := range Protocols {
+		if protoent.Number == num {
+			return protoent, nil
+		}
 	}
-
-	return cprotoentToProtoent(s), nil
+	return Protoent{}, errors.New("Unknown protocol number")
 }
 
 func GetProtoByName(name string) (Protoent, error) {
-	s := C.getprotobyname(C.CString(name))
-	if s == nil {
-		return Protoent{}, errors.New("Unknown protocol name")
+	for _, protoent := range Protocols {
+		if protoent.Name == name {
+			return protoent, nil
+		}
+
+		for _, alias := range protoent.Aliases {
+			if alias == name {
+				return protoent, nil
+			}
+		}
 	}
 
-	return cprotoentToProtoent(s), nil
+	return Protoent{}, errors.New("Unknown protocol number")
 }
