@@ -77,7 +77,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func natJsonHandler(w http.ResponseWriter, r *http.Request) {
-	natEntries := getConntrackFlows().FilterByType(conntrack.SNATFilter|conntrack.DNATFilter)
+	natEntries := getConntrackFlows().FilterByType(conntrack.SNATFilter | conntrack.DNATFilter)
 	natEntriesDumbedDown := make([]NATEntry, len(natEntries))
 
 	for index, entry := range natEntries {
