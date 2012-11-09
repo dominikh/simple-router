@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dominikh/simple-router/monitor"
 	"github.com/dominikh/simple-router/lookup"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
@@ -50,8 +51,8 @@ type NATEntry struct {
 	State              string
 }
 
-var tm = traffic.NewMonitor(500 * time.Millisecond)
-var sm = system.NewMonitor(10 * time.Second)
+var tm = monitor.NewMonitor(traffic.NewMonitor(), 500 * time.Millisecond)
+var sm = monitor.NewMonitor(&system.Monitor{}, 10 * time.Second)
 var captures = NewCaptureManager()
 
 func trafficServer(ws *websocket.Conn) {

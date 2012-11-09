@@ -31,44 +31,43 @@ func (s ProgressiveStat) String() string {
 	)
 }
 
-func NewMonitor(delay time.Duration) *monitor.Monitor {
-	return monitor.NewMonitor(delay, func(m *monitor.Monitor) {
-		var (
-			first           bool = true
-			last_time       time.Time
-			last_statistics StatMap
-		)
+type Monitor struct {
+	first           bool
+	last_time       time.Time
+	last_statistics StatMap
+}
 
-		for {
-			this_time := time.Now()
+func NewMonitor() *Monitor {
+	return &Monitor{true, time.Time{}, make(StatMap)}
+}
 
-			statistics, err := Statistics()
-			if err != nil {
-				log.Fatal(err)
+func (m *Monitor) Run(mon *monitor.Monitor) {
+	this_time := time.Now()
+
+	statistics, err := Statistics()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, stat := range statistics {
+		if !m.first && (stat.In > 0 || stat.Out > 0) {
+			last_stat := m.last_statistics[stat.Host]
+			time_diff := float64(this_time.Sub(m.last_time).Nanoseconds()) / 1000000000
+
+			bytes_per_second_in := float64(stat.In-last_stat.In) / time_diff
+			bytes_per_second_out := float64(stat.Out-last_stat.Out) / time_diff
+
+			stat := ProgressiveStat{
+				stat,
+				this_time,
+				uint64(bytes_per_second_in),
+				uint64(bytes_per_second_out),
 			}
-
-			for _, stat := range statistics {
-				if !first && (stat.In > 0 || stat.Out > 0) {
-					last_stat := last_statistics[stat.Host]
-					time_diff := float64(this_time.Sub(last_time).Nanoseconds()) / 1000000000
-
-					bytes_per_second_in := float64(stat.In-last_stat.In) / time_diff
-					bytes_per_second_out := float64(stat.Out-last_stat.Out) / time_diff
-
-					stat := ProgressiveStat{
-						stat,
-						this_time,
-						uint64(bytes_per_second_in),
-						uint64(bytes_per_second_out),
-					}
-					m.SendData(&stat)
-				}
-			}
-
-			first = false
-			last_time = this_time
-			last_statistics = statistics
-			m.Wait()
+			mon.SendData(&stat)
 		}
-	})
+	}
+
+	m.first = false
+	m.last_time = this_time
+	m.last_statistics = statistics
 }

@@ -9,23 +9,23 @@ import (
 
 type Monitor struct {
 	sync.RWMutex
-	Channels     *list.List
-	Delay        time.Duration
-	MonitorFunc  MonitorFunc
-	channelMap   map[chan interface{}]*list.Element
-	sleepChannel chan bool
+	Channels   *list.List
+	Delay      time.Duration
+	Runnable   Runnable
+	channelMap map[chan interface{}]*list.Element
 }
 
-type MonitorFunc func(*Monitor)
+type Runnable interface {
+	Run(*Monitor)
+}
 
-func NewMonitor(delay time.Duration, function MonitorFunc) *Monitor {
+func NewMonitor(runnable Runnable, delay time.Duration) *Monitor {
 	return &Monitor{
-		RWMutex:      sync.RWMutex{},
-		Channels:     list.New(),
-		Delay:        delay,
-		MonitorFunc:  function,
-		channelMap:   make(map[chan interface{}]*list.Element),
-		sleepChannel: make(chan bool),
+		RWMutex:    sync.RWMutex{},
+		Channels:   list.New(),
+		Delay:      delay,
+		Runnable:   runnable,
+		channelMap: make(map[chan interface{}]*list.Element),
 	}
 }
 
@@ -64,17 +64,12 @@ func (m *Monitor) SendData(data interface{}) {
 }
 
 func (m *Monitor) Start() {
-	go m.MonitorFunc(m)
 	for {
+		go m.Runnable.Run(m)
 		time.Sleep(m.Delay)
-		m.sleepChannel <- true
 	}
 }
 
 func (m *Monitor) Force() {
-	m.sleepChannel <- true
-}
-
-func (m *Monitor) Wait() {
-	<-m.sleepChannel
+	go m.Runnable.Run(m)
 }
