@@ -68,6 +68,10 @@ class Page
             e.preventDefault()
             @.displayMemoryUsage()
 
+        $("#link_dhcp").click (e) =>
+            e.preventDefault()
+            @.displayDHCP()
+
         $("#link_nat").click (e) =>
             e.preventDefault()
             @.displayNAT()
@@ -108,6 +112,11 @@ class Page
         @active_section.fadeOut 250, =>
             @active_section = $("#tools")
             $("#tools").fadeIn 250
+
+    displayDHCP: =>
+        @active_section.fadeOut 250, =>
+            @active_section = $("#dhcp")
+            @active_section.fadeIn 250
 
     displayNAT: =>
         table = $("#nat table#active_connections")

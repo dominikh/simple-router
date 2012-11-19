@@ -83,7 +83,7 @@
           <!-- Use comments to avoid rendering indentation as whitespace -->
           <ul><!--
               --><li><a href="/" id="link_main">Main</a></li><!--
-              --><li><a href="">DHCP</a></li><!--
+              --><li><a href="" id="link_dhcp">DHCP</a></li><!--
               --><li><a href="" id="link_nat">NAT</a></li><!--
               --><li><a href="" id="link_tools">Tools</a></li><!--
               --><li><a href="http://192.168.100.1/">Modem</a></li><!--
@@ -118,6 +118,34 @@
               <option value="1">KB</option>
               <option value="0">B</option>
             </select>
+          <article id="dhcp">
+            <h1>Information</h1>
+            <div>
+              <dl>
+                <dt>DNS server</dt>
+                <dd class="ip">192.168.1.1</dd>
+
+                <dt>Netmask</dt>
+                <dd class="ip">255.255.255.0</dd>
+
+                <dt>Default gateway</dt>
+                <dd class="ip">192.168.1.1</dd>
+
+                <dt>Reserved range (known clients)</dt>
+                <dd><span class="ip">192.168.1.2</span> – <span class="ip">192.168.1.99</span></dd>
+
+                <dt>Dynamic range (unknown clients)</dt>
+                <dd><span class="ip">192.168.1.100</span> – <span class="ip">192.168.1.199</span></dd>
+
+                <dt>Unused</dt>
+                <dd><span class="ip">192.168.1.200</span> – <span class="ip">192.168.1.254</span></dd>
+              </dl>
+            </div>
+
+            <h1>Reserved</h1>
+            <div></div>
+            <h1>Dynamic leases</h1>
+            <div></div>
           </article>
 
           <article id="nat">

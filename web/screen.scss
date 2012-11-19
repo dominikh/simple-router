@@ -279,7 +279,7 @@ table.vertical th {
   }
 }
 
-#nat, #tools {
+#dhcp, #nat, #tools {
   display: none;
 }
 
@@ -312,4 +312,16 @@ table.tablesorter {
     padding: 4px;
     vertical-align: top;
   }
+}
+
+dt {
+  font-weight: bold;
+}
+
+dd {
+  padding-left: 20px;
+}
+
+h1.inactive {
+  color: $light-border-color;
 }
