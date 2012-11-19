@@ -94,6 +94,10 @@ class Page
             $("#stop_capture")[0].disabled = true
             stopCapture()
 
+        $("h1").click ->
+            $(@).toggleClass("inactive")
+            $(@).find("+ div").slideToggle 250, ->
+
         @graph = displayTrafficGraph()
         displaySystemData()
 

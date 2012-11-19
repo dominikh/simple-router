@@ -18,64 +18,66 @@
     <div id="container">
       <article class="group" id="system">
         <h1>System information</h1>
-        <table class="system_information vertical">
-          <tr>
-            <th><a id="link_memory" href="">Memory</a></th>
-            <td>
-              <div class="progressbar">
-                <span class="used" title="{{.Memory.UsedText}} used ({{$pUsed}}%)" style="width: {{$pUsed}}%"></span>
-                <span class="buffers" title="{{.Memory.BuffersText}} buffers ({{$pBuffers}}%)" style="width: {{$pBuffers}}%"></span>
-                <span class="cache" title="{{.Memory.CacheText}} cache ({{$pCache}}%)" style="width: {{$pCache}}%"></span>
-              </div>
-              <table class="memory_usage">
-                <tr>
-                  <th>Used</th>
-                  <td class="used"></td>
-                </tr>
-                <tr>
-                  <th>Buffers</th>
-                  <td class="buffers"></td>
-                </tr>
-                <tr>
-                  <th>Cache</th>
-                  <td class="cache"></td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <th>CPU</th>
-            <td>
-              <div class="progressbar">
-                <span class="usage" title="32%" style="width: 32%"></span>
-              </div>
-              <div class="progressbar">
-                <span class="usage" title="19%" style="width: 19%"></span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th>Temperatures</th>
-            <td>
-            </td>
-          </tr>
-          <tr>
-            <th>LAN IP</th>
-            <td class="ip"></td>
-          </tr>
-          <tr>
-            <th>LAN MAC</th>
-            <td class="mac"></td>
-          </tr>
-          <tr>
-            <th>WAN IP</th>
-            <td class="ip"></td>
-          </tr>
-          <tr>
-            <th>WAN MAC</th>
-            <td class="mac"></td>
-          </tr>
-        </table>
+        <div>
+          <table class="system_information vertical">
+            <tr>
+              <th><a id="link_memory" href="">Memory</a></th>
+              <td>
+                <div class="progressbar">
+                  <span class="used" title="{{.Memory.UsedText}} used ({{$pUsed}}%)" style="width: {{$pUsed}}%"></span>
+                  <span class="buffers" title="{{.Memory.BuffersText}} buffers ({{$pBuffers}}%)" style="width: {{$pBuffers}}%"></span>
+                  <span class="cache" title="{{.Memory.CacheText}} cache ({{$pCache}}%)" style="width: {{$pCache}}%"></span>
+                </div>
+                <table class="memory_usage">
+                  <tr>
+                    <th>Used</th>
+                    <td class="used"></td>
+                  </tr>
+                  <tr>
+                    <th>Buffers</th>
+                    <td class="buffers"></td>
+                  </tr>
+                  <tr>
+                    <th>Cache</th>
+                    <td class="cache"></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <th>CPU</th>
+              <td>
+                <div class="progressbar">
+                  <span class="usage" title="32%" style="width: 32%"></span>
+                </div>
+                <div class="progressbar">
+                  <span class="usage" title="19%" style="width: 19%"></span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>Temperatures</th>
+              <td>
+              </td>
+            </tr>
+            <tr>
+              <th>LAN IP</th>
+              <td class="ip"></td>
+            </tr>
+            <tr>
+              <th>LAN MAC</th>
+              <td class="mac"></td>
+            </tr>
+            <tr>
+              <th>WAN IP</th>
+              <td class="ip"></td>
+            </tr>
+            <tr>
+              <th>WAN MAC</th>
+              <td class="mac"></td>
+            </tr>
+          </table>
+        </div>
       </article>
 
       <div id="main">
@@ -94,30 +96,35 @@
           <article id="main_display">
             <h1>Live Graph</h1>
             <div id="live_graph"></div>
+
             <h1>Monthly statistics</h1>
-            <table id="traffic_stats">
-              <thead>
+            <div>
+              <table id="traffic_stats">
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Downstream</th>
+                    <th>Upstream</th>
+                  </tr>
+                </thead>
                 <tr>
-                  <th>When</th>
-                  <th>Downstream</th>
-                  <th>Upstream</th>
+                  <td><time datetime="2012-08">08/2012</time></td>
+                  <td></td>
+                  <td></td>
                 </tr>
-              </thead>
-              <tr>
-                <td><time datetime="2012-08">08/2012</time></td>
-                <td></td>
-                <td></td>
-              </tr>
-            </table>
-            Display in:
-            <select id="display_option">
-              <option value="-1">Best fit</option>
-              <option value="4">TB</option>
-              <option value="3">GB</option>
-              <option value="2">MB</option>
-              <option value="1">KB</option>
-              <option value="0">B</option>
-            </select>
+              </table>
+              Display in:
+              <select id="display_option">
+                <option value="-1">Best fit</option>
+                <option value="4">TB</option>
+                <option value="3">GB</option>
+                <option value="2">MB</option>
+                <option value="1">KB</option>
+                <option value="0">B</option>
+              </select>
+            </div>
+          </article>
+
           <article id="dhcp">
             <h1>Information</h1>
             <div>
@@ -150,56 +157,60 @@
 
           <article id="nat">
             <h1>Port forwards</h1>
-            <table class="nat sortable" id="port_forwards">
-              <thead>
+            <div>
+              <table class="nat sortable" id="port_forwards">
+                <thead>
+                  <tr>
+                    <th>Port from</th>
+                    <th>Address from</th>
+                    <th>Port to</th>
+                    <th>Address to</th>
+                    <th>Protocol</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tr>
-                  <th>Port from</th>
-                  <th>Address from</th>
-                  <th>Port to</th>
-                  <th>Address to</th>
-                  <th>Protocol</th>
-                  <th>Actions</th>
+                  <td>80</td>
+                  <td>any</td>
+                  <td>80</td>
+                  <td class="ip">192.168.1.4</td>
+                  <td>tcp</td>
+                  <td><a href="">Edit</a> | <a href="">Delete</a></td>
                 </tr>
-              </thead>
-              <tr>
-                <td>80</td>
-                <td>any</td>
-                <td>80</td>
-                <td class="ip">192.168.1.4</td>
-                <td>tcp</td>
-                <td><a href="">Edit</a> | <a href="">Delete</a></td>
-              </tr>
-              <tr>
-                <td>5000-6000</td>
-                <td>any</td>
-                <td>5000-6000</td>
-                <td class="ip">192.168.1.5</td>
-                <td>tcp</td>
-                <td><a href="">Edit</a> | <a href="">Delete</a></td>
-              </tr>
-              <tr>
-                <td>5000-6000</td>
-                <td>any</td>
-                <td>5000-6000</td>
-                <td class="ip">192.168.1.5</td>
-                <td>udp</td>
-                <td><a href="">Edit</a> | <a href="">Delete</a></td>
-              </tr>
-            </table>
+                <tr>
+                  <td>5000-6000</td>
+                  <td>any</td>
+                  <td>5000-6000</td>
+                  <td class="ip">192.168.1.5</td>
+                  <td>tcp</td>
+                  <td><a href="">Edit</a> | <a href="">Delete</a></td>
+                </tr>
+                <tr>
+                  <td>5000-6000</td>
+                  <td>any</td>
+                  <td>5000-6000</td>
+                  <td class="ip">192.168.1.5</td>
+                  <td>udp</td>
+                  <td><a href="">Edit</a> | <a href="">Delete</a></td>
+                </tr>
+              </table>
+            </div>
 
             <h1>Active connections</h1>
-            <table id="active_connections" class="sortable">
-              <thead>
-                <tr>
-                  <th>Protocol</th>
-                  <th>Source Address</th>
-                  <th>Destination Address</th>
-                  <th>State</th>
-                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
+            <div>
+              <table id="active_connections" class="sortable">
+                <thead>
+                  <tr>
+                    <th>Protocol</th>
+                    <th>Source Address</th>
+                    <th>Destination Address</th>
+                    <th>State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
           </article>
 
 
@@ -246,6 +257,7 @@
         </div>
 
         <h1>Network shares</h1>
+        <div></div>
       </section>
     </div>
   </body>
