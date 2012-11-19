@@ -20,25 +20,6 @@ func Resolve(ip net.IP, noop bool) string {
 	return ip.String()
 }
 
-func IPToHostname(ip net.IP) (string, error) {
-	lookup, _ := net.LookupAddr(ip.String())
-
-	if len(lookup) > 0 {
-		return lookup[0], nil
-	}
-
-	hostname, err := dhcp.IPToHostname(ip)
-	if err != nil {
-		return "", err
-	}
-
-	if hostname == "" {
-		hostname = ip.String()
-	}
-
-	return hostname, nil
-}
-
 func IPToHardwareAddress(ip net.IP) (net.HardwareAddr, error) {
 	hw, err := dhcp.IPToHardwareAddress(ip)
 	if err != nil {

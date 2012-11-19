@@ -144,7 +144,7 @@ func resolveIPHandler(w http.ResponseWriter, r *http.Request) {
 	splits := strings.Split(path, "/")
 	ip := net.ParseIP(splits[len(splits)-1])
 	// FIXME check error
-	hostname, _ := lookup.IPToHostname(ip)
+	hostname := lookup.Resolve(ip, false)
 	io.WriteString(w, hostname)
 }
 

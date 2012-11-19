@@ -42,10 +42,7 @@ func Clients() ([]Client, error) {
 		}
 
 		if lease.Hostname == "" {
-			lease.Hostname, err = lookup.IPToHostname(lease.IP)
-			if err != nil {
-				return nil, err
-			}
+			lease.Hostname = lookup.Resolve(lease.IP, false)
 		}
 		clients = append(clients, Client{lease.IP, lease.HardwareAddress, lease.Hostname})
 		done[lease.IP.String()] = true

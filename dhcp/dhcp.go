@@ -82,19 +82,3 @@ func IPToHardwareAddress(ip net.IP) (net.HardwareAddr, error) {
 
 	return nil, nil
 }
-
-func IPToHostname(ip net.IP) (string, error) {
-	leases, err := Leases()
-	if err != nil {
-		return "", err
-	}
-
-	for _, lease := range leases {
-		if lease.IP.Equal(ip) {
-			return lease.Hostname, nil
-		}
-	}
-
-	return "", nil
-
-}
