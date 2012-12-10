@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "filesize"
+require "resolv"
 
 class Numeric
   def round_up(nearest)
@@ -29,6 +30,8 @@ header = "Host\t         Down\t           Up\tTotal down\t  Total up\n"
 
 hostnames = {}
 IO.popen("~/bin/traffic-stats-raw", "r") do |pipe|
+  output = []
+  colors = []
   while line = pipe.gets
     line.chomp!
     if line == "START"
@@ -61,7 +64,11 @@ IO.popen("~/bin/traffic-stats-raw", "r") do |pipe|
     if ARGV.include?("-n") || dst == "total"
       hostname = dst
     else
-      hostname = hostnames[dst] ||= `~/bin/ip-to-hostname '#{dst}'`.chomp
+      begin
+        hostname = hostnames[dst] ||= Resolv.getname(dst)
+      rescue Resolv::ResolvError
+        hostname = hostnames[dst] ||= dst
+      end
     end
 
     bps_in    = bps_in.to_i
