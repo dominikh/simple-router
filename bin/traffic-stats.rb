@@ -34,31 +34,6 @@ IO.popen("~/bin/traffic-stats-raw", "r") do |pipe|
   colors = []
   while line = pipe.gets
     line.chomp!
-    if line == "START"
-      output = []
-      colors = []
-      next
-    end
-
-    if line == "END"
-      s = ""
-      lines = `echo "#{([header] + output).join("\n")}" | column -s "\t" -t`.lines.to_a
-      s << "\033[2J\033[;H"
-      s <<  "\e[1m#{lines.first}\e[0m"
-      lines[1..-1].zip(colors) do |line, color|
-        if color
-          s << "\e[38;05;#{color}m"
-        end
-
-        s << line
-
-        s << "\e[0m"
-      end
-
-      print s
-      next
-    end
-
     _, dst, bps_in, bps_out, total_in, total_out = line.split(";")
 
     if ARGV.include?("-n") || dst == "total"
@@ -103,5 +78,27 @@ IO.popen("~/bin/traffic-stats-raw", "r") do |pipe|
                                                         Filesize.new(total_in).pretty,
                                                         Filesize.new(total_out).pretty
                                                        ]
+
+    if dst == "total"
+      s = ""
+      lines = `echo "#{([header] + output).join("\n")}" | column -s "\t" -t`.lines.to_a
+      s << "\033[2J\033[;H"
+      s <<  "\e[1m#{lines.first}\e[0m"
+      lines[1..-1].zip(colors) do |line, color|
+        if color
+          s << "\e[38;05;#{color}m"
+        end
+
+        s << line
+
+        s << "\e[0m"
+      end
+
+      print s
+
+      output = []
+      colors = []
+      next
+    end
   end
 end
