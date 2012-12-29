@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/dominikh/simple-router/monitor"
 	"github.com/dominikh/simple-router/lookup"
+	"github.com/dominikh/simple-router/monitor"
 	"github.com/dominikh/simple-router/system"
 	"github.com/dominikh/simple-router/traffic"
 
 	"github.com/dominikh/conntrack"
 
-	"code.google.com/p/go.net/websocket"
+	eventsource "github.com/antage/eventsource/http"
 
 	"encoding/gob"
 	"encoding/json"
@@ -28,11 +28,6 @@ type InternetData struct {
 	WAN *net.Interface
 }
 
-type Packet struct {
-	Type string
-	Data interface{}
-}
-
 type Rate struct {
 	Time     string
 	Host     string
@@ -40,6 +35,11 @@ type Rate struct {
 	Out      uint64
 	TotalIn  uint64
 	TotalOut uint64
+}
+
+func (rate *Rate) JSON() string {
+	b, _ := json.Marshal(rate)
+	return string(b)
 }
 
 type NATEntry struct {
@@ -51,24 +51,18 @@ type NATEntry struct {
 	State              string
 }
 
-var tm = monitor.NewMonitor(traffic.NewMonitor(), 500 * time.Millisecond)
-var sm = monitor.NewMonitor(&system.Monitor{}, 10 * time.Second)
 var captures = NewCaptureManager()
 
-func trafficServer(ws *websocket.Conn) {
+func trafficServer(es eventsource.EventSource, tm *monitor.Monitor) {
 	ch := make(chan interface{}, 1)
 	tm.RegisterChannel(ch)
 
 	for item := range ch {
 		stat := item.(*traffic.ProgressiveStat)
 
-		msg := Packet{"rate", &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}}
-		err := websocket.JSON.Send(ws, msg)
-		if err != nil {
-			fmt.Println(err)
-			tm.UnregisterChannel(ch)
-			break
-		}
+		msg := &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}
+
+		es.SendMessage(msg.JSON(), "", "")
 	}
 }
 
@@ -175,19 +169,14 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 	cmd.Wait()
 }
 
-func systemDataServer(ws *websocket.Conn) {
+func systemDataServer(es eventsource.EventSource, sm *monitor.Monitor) {
 	ch := make(chan interface{}, 1)
 	sm.RegisterChannel(ch)
 	sm.Force()
 	for item := range ch {
 		data := item.(*system.Data)
-
-		err := websocket.JSON.Send(ws, data)
-		if err != nil {
-			fmt.Println(err)
-			sm.UnregisterChannel(ch)
-			break
-		}
+		json, _ := json.Marshal(data)
+		es.SendMessage(string(json), "", "")
 	}
 }
 
@@ -208,8 +197,17 @@ func getConntrackFlows() conntrack.FlowSlice {
 }
 
 func main() {
+	esTraffic := eventsource.New()
+	esSystemData := eventsource.New()
+
+	tm := monitor.NewMonitor(traffic.NewMonitor(), 500*time.Millisecond)
+	sm := monitor.NewMonitor(&system.Monitor{}, 10*time.Second)
+
 	go tm.Start()
 	go sm.Start()
+
+	go trafficServer(esTraffic, tm)
+	go systemDataServer(esSystemData, sm)
 
 	srv := &http.Server{
 		ReadTimeout:  2 * time.Second,
@@ -224,8 +222,8 @@ func main() {
 	http.HandleFunc("/traffic_capture", trafficCaptureHandler)
 	http.HandleFunc("/stop_capture", trafficCaptureStopHandler)
 
-	http.Handle("/websocket/traffic_data/", websocket.Handler(trafficServer))
-	http.Handle("/websocket/system_data/", websocket.Handler(systemDataServer))
+	http.Handle("/live/traffic_data/", esTraffic)
+	http.Handle("/live/system_data/", esSystemData)
 
 	http.HandleFunc("/resolve_ip/", resolveIPHandler)
 

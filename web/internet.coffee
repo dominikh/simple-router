@@ -309,29 +309,27 @@ $ ->
 displayTrafficGraph = ->
     graph = new TrafficGraph($("#live_graph"))
 
-    socket = new (WebSocket ? MozWebSocket)("ws://192.168.1.1:8000/websocket/traffic_data/")
+    source = new EventSource("/live/traffic_data/")
 
-    socket.onmessage = (msg) ->
-        packet = $.parseJSON(msg.data)
-        if packet.Type == "rate"
-            data = packet.Data
-            if data.Host == "total"
-                graph.addPoint(data)
-                updateThisMonthsStatistics(data)
+    source.onmessage = (event) ->
+        packet = $.parseJSON(event.data)
+        if packet.Host == "total"
+            graph.addPoint(packet)
+            updateThisMonthsStatistics(packet)
 
-            # Adding a new row might change the graph's available
-            # width, so resize the graph.
-            newRow = updateClients(data)
-            if newRow
-                graph.updateDimensions()
+        # Adding a new row might change the graph's available
+        # width, so resize the graph.
+        newRow = updateClients(packet)
+        if newRow
+            graph.updateDimensions()
     return graph
 
 
 displaySystemData = ->
-    socket = new (WebSocket ? MozWebSocket)("ws://192.168.1.1:8000/websocket/system_data/")
+    source = new EventSource("/live/system_data/")
 
-    socket.onmessage = (msg) ->
-        data = $.parseJSON(msg.data)
+    source.onmessage = (event) ->
+        data = $.parseJSON(event.data)
 
         updateMemoryStat(data["Memory"], "used")
         updateMemoryStat(data["Memory"], "buffers")
