@@ -288,7 +288,7 @@ updateClients = (data) ->
     else
         if (hostname = ResolvedIPs[data.Host]) && (row.attr("data-hostname") != hostname)
             row.attr("data-hostname", hostname)
-            row.find("td a").attr("title", "#{hostname} &lt;#{data.Host}&gt;")
+            row.find("td a").attr("title", "#{hostname} <#{data.Host}>")
             row.find("td a").html(ellipsize(hostname, 25))
             resizeGraph = true
     up = row.find("span.up")
