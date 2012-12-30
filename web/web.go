@@ -165,13 +165,56 @@ func trafficCaptureStopHandler(w http.ResponseWriter, r *http.Request) {
 	cmd.Wait()
 }
 
+type dataInterfaces struct {
+	LAN dataInterface
+	WAN dataInterface
+}
+
+type dataInterface struct {
+	MAC string
+	IPs []string
+}
+
 func systemDataServer(es eventsource.EventSource, sm *monitor.Monitor) {
 	ch := make(chan interface{}, 1)
 	sm.RegisterChannel(ch)
 	sm.Force()
 	for item := range ch {
 		data := item.(*system.Data)
-		json, _ := json.Marshal(data)
+
+		var lanIPs []string
+		var wanIPs []string
+
+		lanAddrs, _ := data.Interfaces.LAN.Addrs()
+		wanAddrs, _ := data.Interfaces.WAN.Addrs()
+
+		for _, addr := range lanAddrs {
+			lanIPs = append(lanIPs, addr.String())
+		}
+
+		for _, addr := range wanAddrs {
+			wanIPs = append(wanIPs, addr.String())
+		}
+
+		dataToSerialize := struct {
+			Memory       system.MemoryStats
+			Temperatures map[string]float64
+			Interfaces   dataInterfaces
+		}{
+			data.Memory,
+			data.Temperatures,
+			dataInterfaces{
+				dataInterface{
+					data.Interfaces.LAN.HardwareAddr.String(),
+					lanIPs,
+				},
+				dataInterface{
+					data.Interfaces.WAN.HardwareAddr.String(),
+					wanIPs,
+				},
+			},
+		}
+		json, _ := json.Marshal(dataToSerialize)
 		es.SendMessage(string(json), "", "")
 	}
 }

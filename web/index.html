@@ -1,8 +1,5 @@
 <!DOCTYPE html>
 <html>
-  {{$pUsed := .Memory.UsedPercentage | printf "%.2f"}}
-  {{$pBuffers := .Memory.BuffersPercentage | printf "%.2f"}}
-  {{$pCache := .Memory.CachePercentage | printf "%.2f"}}
   <head>
     <meta charset="utf-8" />
     <title>Router</title>
@@ -24,9 +21,9 @@
               <th><a id="link_memory" href="">Memory</a></th>
               <td>
                 <div class="progressbar">
-                  <span class="used" title="{{.Memory.UsedText}} used ({{$pUsed}}%)" style="width: {{$pUsed}}%"></span>
-                  <span class="buffers" title="{{.Memory.BuffersText}} buffers ({{$pBuffers}}%)" style="width: {{$pBuffers}}%"></span>
-                  <span class="cache" title="{{.Memory.CacheText}} cache ({{$pCache}}%)" style="width: {{$pCache}}%"></span>
+                  <span class="used"></span>
+                  <span class="buffers"></span>
+                  <span class="cache"></span>
                 </div>
                 <table class="memory_usage">
                   <tr>
@@ -62,19 +59,19 @@
             </tr>
             <tr>
               <th>LAN IP</th>
-              <td class="ip"></td>
+              <td id="ips_lan" class="ip"></td>
             </tr>
             <tr>
               <th>LAN MAC</th>
-              <td class="mac"></td>
+              <td id="mac_lan" class="mac"></td>
             </tr>
             <tr>
               <th>WAN IP</th>
-              <td class="ip"></td>
+              <td id="ips_wan" class="ip"></td>
             </tr>
             <tr>
               <th>WAN MAC</th>
-              <td class="mac"></td>
+              <td id="mac_wan"  class="mac"></td>
             </tr>
           </table>
         </div>

@@ -324,16 +324,27 @@ displayTrafficGraph = ->
             graph.updateDimensions()
     return graph
 
-
 displaySystemData = ->
     source = new EventSource("/live/system_data/")
 
     source.onmessage = (event) ->
         data = $.parseJSON(event.data)
 
+        updateMAC(data["Interfaces"], "LAN")
+        updateMAC(data["Interfaces"], "WAN")
+
+        updateIPs(data["Interfaces"], "LAN")
+        updateIPs(data["Interfaces"], "WAN")
+
         updateMemoryStat(data["Memory"], "used")
         updateMemoryStat(data["Memory"], "buffers")
         updateMemoryStat(data["Memory"], "cache")
+
+updateMAC = (interfaces, iface) ->
+    $("#mac_" + iface.toLowerCase()).html(interfaces[iface]["MAC"])
+
+updateIPs = (interfaces, iface) ->
+    $("#ips_" + iface.toLowerCase()).html(interfaces[iface]["IPs"].join("<br>"))
 
 updateMemoryStat = (memory, stat) ->
     el = $(".system_information .progressbar .#{stat.toLowerCase()}")
