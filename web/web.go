@@ -24,10 +24,6 @@ import (
 	"time"
 )
 
-type InternetData struct {
-	WAN *net.Interface
-}
-
 type Rate struct {
 	Time     string
 	Host     string
