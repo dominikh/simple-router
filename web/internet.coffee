@@ -240,16 +240,19 @@ class TrafficGraph
     addPoint: (data) =>
         if @update == true
             for index, otherData of @backlog
+                time = new Date(otherData.Time).getTime()
                 # Using the index here, because series1.data.length
                 # will not update until we call chart.redraw
                 shift = (@chart.series[0].data.length + index) > 60
-                @chart.series[0].addPoint([otherData.Time*1000, otherData.In], false, shift)
-                @chart.series[1].addPoint([otherData.Time*1000, -otherData.Out], false, shift)
+                @chart.series[0].addPoint([time, otherData.BPSIn], false, shift)
+                @chart.series[1].addPoint([time, -otherData.BPSOut], false, shift)
                 @backlog = []
 
             shift = @chart.series[0].data.length > 60
-            @chart.series[0].addPoint([data.Time*1000, data.In], false, shift)
-            @chart.series[1].addPoint([data.Time*1000, -data.Out], false, shift)
+            time = new Date(data.Time).getTime()
+            console.log(time)
+            @chart.series[0].addPoint([time, data.BPSIn], false, shift)
+            @chart.series[1].addPoint([time, -data.BPSOut], false, shift)
             @chart.redraw()
         else
             @backlog.push(data)
@@ -264,8 +267,8 @@ class TrafficGraph
 updateThisMonthsStatistics = (data) ->
     exp = $("#display_option").val()
     thisMonth = $("#traffic_stats > tbody > tr:first > td")
-    thisMonth[1].innerHTML = formatByteCount(data.TotalIn, 1000, exp)
-    thisMonth[2].innerHTML = formatByteCount(data.TotalOut, 1000, exp)
+    thisMonth[1].innerHTML = formatByteCount(data.In, 1000, exp)
+    thisMonth[2].innerHTML = formatByteCount(data.Out, 1000, exp)
 
 resolveIP = (ip) ->
     return if ResolvedIPs[ip]
@@ -278,7 +281,7 @@ updateClients = (data) ->
     resizeGraph = false
 
     if row.length == 0
-        return false if (data.Out == 0 && data.In == 0) || data.Host == "total"
+        return false if (data.BPSOut == 0 && data.BPSIn == 0) || data.Host == "total"
         resolveIP(data.Host)
 
         row = $("<tr data-hostname='#{data.Host}' data-ip='#{data.Host}'><td><a href='' title='#{data.Host} &lt;#{data.Host}&gt;'>#{ellipsize(data.Host, 25)}</a></td><td class='up'>↗<span class='up'>0 B/s</span></td><td class='down'>↙<span class='down'>0 B/s</span></td></tr>")
@@ -294,11 +297,11 @@ updateClients = (data) ->
     up = row.find("span.up")
     down = row.find("span.down")
 
-    up.html(formatByteCount(data.Out, 1000) + "/s")
-    down.html(formatByteCount(data.In, 1000) + "/s")
+    up.html(formatByteCount(data.BPSOut, 1000) + "/s")
+    down.html(formatByteCount(data.BPSIn, 1000) + "/s")
 
-    up.css("color", byteColor(data.Out, "up"))
-    down.css("color", byteColor(data.In, "down"))
+    up.css("color", byteColor(data.BPSOut, "up"))
+    down.css("color", byteColor(data.BPSIn, "down"))
 
     return resizeGraph
 
@@ -312,14 +315,16 @@ displayTrafficGraph = ->
     source = new EventSource("/live/traffic_data/")
 
     source.onmessage = (event) ->
-        packet = $.parseJSON(event.data)
-        if packet.Host == "total"
-            graph.addPoint(packet)
-            updateThisMonthsStatistics(packet)
+        stats = $.parseJSON(event.data)
+        for stat in stats
+            if stat.Host == "total"
+                console.log(stat)
+                graph.addPoint(stat)
+                updateThisMonthsStatistics(stat)
 
-        # Adding a new row might change the graph's available
-        # width, so resize the graph.
-        newRow = updateClients(packet)
+            # Adding a new row might change the graph's available
+            # width, so resize the graph.
+            newRow = updateClients(stat) || newRow
         if newRow
             graph.updateDimensions()
     return graph

@@ -8,7 +8,7 @@ import (
 
 	"github.com/dominikh/conntrack"
 
-	eventsource "github.com/antage/eventsource/http"
+	eventsource "github.com/dominikh/eventsource/http"
 
 	"encoding/gob"
 	"encoding/json"
@@ -23,20 +23,6 @@ import (
 	"strings"
 	"time"
 )
-
-type Rate struct {
-	Time     string
-	Host     string
-	In       uint64
-	Out      uint64
-	TotalIn  uint64
-	TotalOut uint64
-}
-
-func (rate *Rate) JSON() string {
-	b, _ := json.Marshal(rate)
-	return string(b)
-}
 
 type NATEntry struct {
 	Protocol           string
@@ -54,11 +40,10 @@ func trafficServer(es eventsource.EventSource, tm *monitor.Monitor) {
 	tm.RegisterChannel(ch)
 
 	for item := range ch {
-		stat := item.(*traffic.ProgressiveStat)
+		stats := item.([]traffic.ProgressiveStat)
 
-		msg := &Rate{stat.UnixMilliseconds(), stat.Host, stat.BPSIn, stat.BPSOut, stat.In, stat.Out}
-
-		es.SendMessage(msg.JSON(), "", "")
+		json, _ := json.Marshal(stats)
+		es.SendMessage(string(json), "", "")
 	}
 }
 
@@ -239,7 +224,7 @@ func main() {
 	esTraffic := eventsource.New()
 	esSystemData := eventsource.New()
 
-	tm := monitor.NewMonitor(traffic.NewMonitor(), 500*time.Millisecond)
+	tm := monitor.NewMonitor(&traffic.Monitor{}, 500*time.Millisecond)
 	sm := monitor.NewMonitor(&system.Monitor{}, 10*time.Second)
 
 	go tm.Start()

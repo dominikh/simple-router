@@ -32,13 +32,8 @@ func (s ProgressiveStat) String() string {
 }
 
 type Monitor struct {
-	first           bool
 	last_time       time.Time
 	last_statistics StatMap
-}
-
-func NewMonitor() *Monitor {
-	return &Monitor{true, time.Time{}, make(StatMap)}
 }
 
 func (m *Monitor) Run(mon *monitor.Monitor) {
@@ -49,8 +44,9 @@ func (m *Monitor) Run(mon *monitor.Monitor) {
 		log.Fatal(err)
 	}
 
+	var progressiveStats []ProgressiveStat
 	for _, stat := range statistics {
-		if !m.first && (stat.In > 0 || stat.Out > 0) {
+		if (stat.In > 0 || stat.Out > 0) {
 			last_stat := m.last_statistics[stat.Host]
 			time_diff := float64(this_time.Sub(m.last_time).Nanoseconds()) / 1000000000
 
@@ -63,11 +59,14 @@ func (m *Monitor) Run(mon *monitor.Monitor) {
 				uint64(bytes_per_second_in),
 				uint64(bytes_per_second_out),
 			}
-			mon.SendData(&stat)
+			progressiveStats = append(progressiveStats, stat)
 		}
 	}
 
-	m.first = false
+	if !m.last_time.IsZero() {
+		mon.SendData(progressiveStats)
+	}
+
 	m.last_time = this_time
 	m.last_statistics = statistics
 }
